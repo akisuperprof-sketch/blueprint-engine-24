@@ -494,7 +494,7 @@ export default function Home() {
                 <button
                   onClick={() => generateFinal(false)}
                   disabled={loading}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-12 py-4 rounded-full font-bold text-lg shadow-xl shadow-blue-500/30 hover:scale-105 hover:shadow-blue-500/50 transition-all flex items-center gap-2"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-10 py-3 rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
                 >
                   {loading ? '清書中...' : '💫 完成画像を生成する'}
                 </button>
