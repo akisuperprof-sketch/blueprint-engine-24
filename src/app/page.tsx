@@ -229,7 +229,7 @@ export default function Home() {
           // Logic checks: can only go back or stay, unless strictly debugging. 
           // Simple logic: Highlight current.
           return (
-            <div key={s.id} className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all ${isActive ? 'bg-primary text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>
+            <div key={s.id} className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>
               {s.label}
             </div>
           )

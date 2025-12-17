@@ -109,7 +109,13 @@ export async function POST(req: Request) {
             const svgEnd = text.indexOf("</svg>");
 
             if (svgStart !== -1 && svgEnd !== -1) {
-                const svgCode = text.substring(svgStart, svgEnd + 6);
+                let svgCode = text.substring(svgStart, svgEnd + 6);
+
+                // Ensure xmlns exists for valid data-uri rendering
+                if (!svgCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                    svgCode = svgCode.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+                }
+
                 returnData = {
                     type: "svg",
                     content: svgCode
