@@ -534,50 +534,67 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Title</label>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-blue-500" /> タイトル (Title)
+                </label>
                 <input
                   value={draftData.main_title || ''}
                   onChange={(e) => setDraftData({ ...draftData, main_title: e.target.value })}
-                  className="w-full text-lg font-bold p-2 border-b border-dashed border-slate-300 bg-transparent focus:border-blue-500 outline-none"
+                  className="w-full text-lg font-bold p-3 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="タイトルを入力..."
                 />
               </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Summary</label>
-                <input
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-blue-500" /> 概要・目的 (Summary)
+                </label>
+                <textarea
                   value={draftData.summary || ''}
                   onChange={(e) => setDraftData({ ...draftData, summary: e.target.value })}
-                  className="w-full text-md text-slate-600 p-2 border-b border-dashed border-slate-300 bg-transparent focus:border-blue-500 outline-none"
+                  className="w-full text-base text-slate-700 p-3 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none h-24"
+                  placeholder="概要を入力..."
                 />
               </div>
 
-              <div className="space-y-3 mt-6">
+              <div className="space-y-4 mt-8">
+                <h3 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
+                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">STEP</span> 構成要素の編集
+                </h3>
                 {draftData.steps?.map((step: any, idx: number) => (
-                  <div key={idx} className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                    <div className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex gap-4 items-start">
+                      <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-1">
                         {idx + 1}
                       </div>
-                      <div className="flex-1 space-y-2">
-                        <input
-                          value={step.label}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const newSteps = [...(draftData.steps || [])];
-                            newSteps[idx].label = e.target.value;
-                            setDraftData({ ...draftData, steps: newSteps });
-                          }}
-                          className="w-full font-semibold bg-transparent border-b border-transparent focus:border-slate-300 outline-none"
-                        />
-                        <input
-                          value={step.visual_desc}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const newSteps = [...(draftData.steps || [])];
-                            newSteps[idx].visual_desc = e.target.value;
-                            setDraftData({ ...draftData, steps: newSteps });
-                          }}
-                          className="w-full text-sm text-slate-500 bg-transparent border-b border-transparent focus:border-slate-300 outline-none"
-                        />
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 mb-1 block">ラベル (Label)</label>
+                          <input
+                            value={step.label}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              const newSteps = [...(draftData.steps || [])];
+                              newSteps[idx].label = e.target.value;
+                              setDraftData({ ...draftData, steps: newSteps });
+                            }}
+                            className="w-full font-bold text-slate-800 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="項目名..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 mb-1 block">視覚イメージ (Visual Description)</label>
+                          <input
+                            value={step.visual_desc}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              const newSteps = [...(draftData.steps || [])];
+                              newSteps[idx].visual_desc = e.target.value;
+                              setDraftData({ ...draftData, steps: newSteps });
+                            }}
+                            className="w-full text-sm text-slate-600 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="具体的な絵の指示..."
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
