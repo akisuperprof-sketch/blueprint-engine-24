@@ -16,19 +16,13 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Use a model capable of strong instruction following for SVG generation
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+        // Use Gemini 3 model as requested by user
+        const model = genAI.getGenerativeModel({ model: "gemini-3-pro-preview" });
 
         let finalPrompt = prompt;
 
-        // Force SVG output because standard Gemini models return text/code, not image binaries directly.
-        // We need to guide the model to produce a visual representation via SVG code.
-        if (prompt.includes("[DRAFT MODE]") || prompt.includes("Structure")) {
-            finalPrompt += "\n\nCRITICAL OUTPUT RULE: Generate the diagram as valid **SVG XML CODE** only. Do not use Markdown code blocks. Do not contain conversational text. Start with <svg and end with </svg>.";
-        } else {
-            // For final design, we still need SVG but request higher detail/artistic attributes.
-            finalPrompt += "\n\nCRITICAL OUTPUT RULE: Generate a High-Quality, detailed **SVG** representation of the image. Use gradients, filters, and styling matches the requested style. Output ONLY the SVG code. Start with <svg and end with </svg>.";
-        }
+        // We do not force SVG output here anymore, trusting that Gemini 3 can return images 
+        // or that the prompt itself (containing [DRAFT MODE] etc.) is sufficient guidance.
 
         let content: any[] = [finalPrompt];
 
