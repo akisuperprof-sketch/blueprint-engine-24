@@ -19,9 +19,16 @@ export async function POST(req: Request) {
         // Use a model capable of strong instruction following for SVG generation
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-        // Remove forced SVG instructions to allows native image generation if the model supports it (like the original app).
-        // The prompt from the frontend already contains [DRAFT MODE] or [FINAL STYLE] instructions.
-        const finalPrompt = prompt;
+        let finalPrompt = prompt;
+
+        // Force SVG output because standard Gemini models return text/code, not image binaries directly.
+        // We need to guide the model to produce a visual representation via SVG code.
+        if (prompt.includes("[DRAFT MODE]") || prompt.includes("Structure")) {
+            finalPrompt += "\n\nCRITICAL OUTPUT RULE: Generate the diagram as valid **SVG XML CODE** only. Do not use Markdown code blocks. Do not contain conversational text. Start with <svg and end with </svg>.";
+        } else {
+            // For final design, we still need SVG but request higher detail/artistic attributes.
+            finalPrompt += "\n\nCRITICAL OUTPUT RULE: Generate a High-Quality, detailed **SVG** representation of the image. Use gradients, filters, and styling matches the requested style. Output ONLY the SVG code. Start with <svg and end with </svg>.";
+        }
 
         let content: any[] = [finalPrompt];
 
