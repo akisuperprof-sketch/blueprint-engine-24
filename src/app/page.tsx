@@ -471,9 +471,9 @@ export default function Home() {
           <div className="flex justify-end pt-4">
             <button
               onClick={() => setPhase('design')}
-              className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all flex items-center gap-2"
+              className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all flex items-center gap-2"
             >
-              デザイン選択へ <ChevronRight className="w-4 h-4" />
+              デザイン選択へ <ChevronRight className="w-5 h-5 bg-white/20 rounded-full p-0.5" />
             </button>
           </div>
         </div>
