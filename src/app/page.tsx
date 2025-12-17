@@ -229,7 +229,14 @@ export default function Home() {
           // Logic checks: can only go back or stay, unless strictly debugging. 
           // Simple logic: Highlight current.
           return (
-            <div key={s.id} className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all ${isActive ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>
+            <div
+              key={s.id}
+              className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all ${isActive ? 'shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              style={{
+                backgroundColor: isActive ? '#2563EB' : 'transparent',
+                color: isActive ? '#ffffff' : undefined
+              }}
+            >
               {s.label}
             </div>
           )
@@ -430,7 +437,16 @@ export default function Home() {
 
             {draftImage ? (
               <div className="relative w-full max-w-3xl mx-auto rounded-lg overflow-hidden border border-slate-200 shadow-md">
-                <img src={draftImage} alt="Draft" className="w-full h-auto" />
+                {draftImage.startsWith('data:image/svg') ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: decodeURIComponent(escape(atob(draftImage.split(',')[1])))
+                    }}
+                    className="w-full h-auto svg-container"
+                  />
+                ) : (
+                  <img src={draftImage} alt="Draft" className="w-full h-auto" />
+                )}
               </div>
             ) : (
               <div className="w-full h-64 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-slate-400">Loading Draft...</div>
