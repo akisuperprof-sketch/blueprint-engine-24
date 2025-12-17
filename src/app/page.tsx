@@ -23,6 +23,7 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false); // Collapsible Instructions State
+  const [isPromptEditOpen, setIsPromptEditOpen] = useState(false);
 
   // Input Phase
   const [inputText, setInputText] = useState('');
@@ -621,49 +622,115 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
       {/* --- PHASE 3: DRAFT --- */}
       {phase === 'draft' && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/90 rounded-2xl p-6 border border-slate-200 shadow-sm text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-6">03. ラフスケッチ確認</h2>
-
-            {draftImage ? (
-              <div className="relative w-full max-w-3xl mx-auto rounded-lg overflow-hidden border border-slate-200 shadow-md">
-                {draftImage.startsWith('data:image/svg') ? (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: decodeURIComponent(escape(atob(draftImage.split(',')[1])))
-                    }}
-                    className="w-full h-auto svg-container"
-                  />
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Left: Draft Image */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-slate-400" /> ドラフト (ラフ画)
+              </h3>
+              <div className="flex-1 bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center min-h-[400px]">
+                {draftImage ? (
+                  <img src={draftImage} className="max-w-full max-h-full object-contain" />
                 ) : (
-                  <img src={draftImage} alt="Draft" className="w-full h-auto" />
+                  <div className="text-slate-400">画像なし</div>
                 )}
               </div>
-            ) : (
-              <div className="w-full h-64 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-slate-400">Loading Draft...</div>
-            )}
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-sm text-yellow-800">
+                💡 <strong>Check:</strong> 配置や矢印の流れは正しいですか？配色はまだ適用されていません。
+              </div>
 
-            <div className="mt-6 flex gap-2 max-w-xl mx-auto">
-              <input
-                placeholder="レイアウト修正指示 (例: 文字をもっと大きく)"
-                className="flex-1 p-2 border rounded-lg text-sm"
-                value={layoutFeedback}
-                onChange={(e) => setLayoutFeedback(e.target.value)}
-              />
-              <button
-                onClick={() => generateDraft()} // Re-run with feedback
-                className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm whitespace-nowrap"
-              >
-                再生成
-              </button>
+              {/* Layout Feedback */}
+              <div className="mt-4">
+                <label className="text-xs font-bold text-slate-500 mb-1 block">レイアウトの修正指示 (ドラフト再生成)</label>
+                <div className="flex gap-2">
+                  <input
+                    value={layoutFeedback}
+                    onChange={(e) => setLayoutFeedback(e.target.value)}
+                    placeholder="例: タイトルをもっと大きく、Step1と2を離して..."
+                    className="flex-1 p-2 text-sm border border-slate-200 rounded-lg"
+                  />
+                  <button
+                    onClick={generateDraft}
+                    disabled={loading}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold"
+                  >
+                    再ドラフト
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-end pt-4">
-            <button
-              onClick={() => setPhase('design')}
-              className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all flex items-center gap-2"
-            >
-              デザイン選択へ <ChevronRight className="w-5 h-5 bg-white/20 rounded-full p-0.5" />
-            </button>
+            {/* Right: Style & Finalize */}
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-blue-500" /> デザインスタイルの選択
+                </h3>
+                <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2">
+                  {Object.keys(STYLE_PROMPTS).map((styleName) => (
+                    <div
+                      key={styleName}
+                      onClick={() => setSelectedStyle(styleName)}
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedStyle === styleName
+                        ? 'border-blue-500 bg-blue-50/50'
+                        : 'border-slate-100 hover:border-blue-200'
+                        }`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm ${selectedStyle === styleName ? 'bg-blue-100' : 'bg-white'}`}>
+                        {STYLE_ICONS[styleName] || '🎨'}
+                      </div>
+                      <div>
+                        <div className={`font-bold text-sm ${selectedStyle === styleName ? 'text-blue-700' : 'text-slate-700'}`}>
+                          {styleName}
+                        </div>
+                      </div>
+                      {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Advanced Prompt Editor */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <button
+                  onClick={() => setIsPromptEditOpen(!isPromptEditOpen)}
+                  className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm"
+                >
+                  <span className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-slate-400" /> 上級者向け: プロンプト（指示文）の編集
+                  </span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${isPromptEditOpen ? 'rotate-90' : ''}`} />
+                </button>
+
+                {isPromptEditOpen && (
+                  <div className="mt-3 animate-in fade-in zoom-in-95 duration-200">
+                    <p className="text-xs text-slate-500 mb-2">
+                      ※ここはAIへの最終的な指示文です。自動生成された内容を直接調整したい場合のみ編集してください。
+                    </p>
+                    <textarea
+                      value={finalPrompt}
+                      onChange={(e) => setFinalPrompt(e.target.value)}
+                      className="w-full h-64 p-3 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={() => generateFinal(false)}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2"
+                >
+                  {loading ? '生成中...' : <>デザイン清書を実行 <Download className="w-5 h-5" /></>}
+                </button>
+                <div className="text-center mt-3">
+                  <button onClick={() => setPhase('struct')} className="text-slate-400 text-sm hover:text-slate-600">
+                    ← 構成に戻る
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
