@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Clock, Check, ChevronRight, RotateCcw, Download, Upload, Image as ImageIcon, Copy, Search, Edit3 } from 'lucide-react';
 import { ARCHETYPES, STYLE_PROMPTS, STYLE_ICONS } from '@/lib/constants';
 import Image from 'next/image';
@@ -30,6 +30,7 @@ export default function Home() {
   const [additionalInst, setAdditionalInst] = useState('');
   const [refImages, setRefImages] = useState<{ data: string, mimeType: string }[]>([]);
   const [isRefMandatory, setIsRefMandatory] = useState(false);
+  const [targetLanguage, setTargetLanguage] = useState('Japanese');
 
   // Struct Phase
   const [draftData, setDraftData] = useState<DraftData>({});
@@ -91,6 +92,10 @@ export default function Home() {
             【指定構造】
             ${archetype}
 
+            【出力言語 (Output Language)】
+            ${targetLanguage}
+            ※重要: 入力が何語であっても、出力JSONの"label"（図中の文字）や"summary"は、必ず「${targetLanguage}」に翻訳・統一してください。
+
             ${additionalInst ? `【追加指示】\n${additionalInst}` : ''}
             ${refImages.length > 0 ? `\n【参考画像あり】\n画像を参考に、その雰囲気や構造要素を取り入れてください。(画像の要素反映は「${isRefMandatory ? "必須" : "任意"}」です)` : ""}
 
@@ -141,6 +146,9 @@ export default function Home() {
             【ユーザーの修正指示】
             ${retakeInstr}
 
+            【制約】
+            出力言語は引き続き「${targetLanguage}」を維持してください。
+            
             【出力】
             修正後のJSONのみを出力してください。Markdownタグ不要。
             `;
@@ -172,6 +180,11 @@ export default function Home() {
       ? "Reference images provided. capture the style/character from input images."
       : "なし";
 
+    // Dynamic Language Instruction
+    const langInstruction = targetLanguage === 'Japanese'
+      ? "図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。"
+      : `All text labels inside the image MUST be in **${targetLanguage}**.`
+
     const basePrompt = `
 **役割:** 熟練したインフォグラフィックデザイナー
 **目的:** ${draftData.main_title}に基づいた明確で美しいインフォグラフィックの生成
@@ -179,7 +192,7 @@ export default function Home() {
 **1. テーマとスタイルの定義**
 * **メインタイトル:** ${draftData.main_title}
 * **概要・目的:** ${draftData.summary}
-* **言語指定:** 図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。
+* **言語指定:** ${langInstruction}
 * **スタイル:** ${draftData.recommended_style}
 
 **2. 構造の定義 (Structural Archetype)**
@@ -332,6 +345,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-3">
+          <Image src="/logo.png" alt="Scheme Maker Logo" width={40} height={40} className="w-10 h-10 object-contain" />
           <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
             Blueprint Engine 24
           </div>
@@ -456,6 +470,24 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
                 <select value={archetype} onChange={(e) => setArchetype(e.target.value)} className="w-full p-2 rounded-lg border border-slate-200 bg-white/50">
                   {ARCHETYPES.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
+
+                {/* Language Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">出力言語 (Output Language)</label>
+                  <select
+                    value={targetLanguage}
+                    onChange={(e) => setTargetLanguage(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-slate-200 bg-white/50 text-sm"
+                  >
+                    <option value="Japanese">日本語 (Japanese)</option>
+                    <option value="English">英語 (English)</option>
+                    <option value="Chinese">中国語 (Chinese)</option>
+                    <option value="Korean">韓国語 (Korean)</option>
+                    <option value="Spanish">スペイン語 (Spanish)</option>
+                    <option value="French">フランス語 (French)</option>
+                  </select>
+                </div>
+
                 <textarea
                   value={additionalInst}
                   onChange={(e) => setAdditionalInst(e.target.value)}
@@ -515,7 +547,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
               </div>
 
               <div className="space-y-3 mt-6">
-                {draftData.steps?.map((step, idx) => (
+                {draftData.steps?.map((step: any, idx: number) => (
                   <div key={idx} className="bg-slate-50 p-4 rounded-lg border border-slate-100">
                     <div className="flex gap-4">
                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
@@ -524,7 +556,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
                       <div className="flex-1 space-y-2">
                         <input
                           value={step.label}
-                          onChange={(e) => {
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const newSteps = [...(draftData.steps || [])];
                             newSteps[idx].label = e.target.value;
                             setDraftData({ ...draftData, steps: newSteps });
@@ -533,7 +565,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
                         />
                         <input
                           value={step.visual_desc}
-                          onChange={(e) => {
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const newSteps = [...(draftData.steps || [])];
                             newSteps[idx].visual_desc = e.target.value;
                             setDraftData({ ...draftData, steps: newSteps });
