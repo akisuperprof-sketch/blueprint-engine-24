@@ -345,10 +345,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Scheme Maker Logo" width={40} height={40} className="w-10 h-10 object-contain" />
-          <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
-            Blueprint Engine 24
-          </div>
+          <Image src="/logo.png" alt="Scheme Maker Logo" width={200} height={50} className="h-10 w-auto object-contain" />
         </div>
         <div className="flex gap-2">
           <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="p-2 rounded-full bg-white border border-slate-200 hover:bg-slate-50 shadow-sm">
