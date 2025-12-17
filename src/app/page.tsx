@@ -73,7 +73,9 @@ export default function Home() {
 
   // Step 1: Generate Structure
   const generateStructure = async () => {
-    if (!apiKey) { setIsSettingsOpen(true); return; }
+    // Allow empty key - backend will check env var
+    if (!apiKey && inputText.length < 5) { setIsSettingsOpen(true); return; }
+
     setLoading(true);
     setLoadingMessage("解析中... (構造化)");
     try {
@@ -167,9 +169,10 @@ export default function Home() {
 
       if (data.type === 'image') {
         setDraftImage(`data:${data.mimeType};base64,${data.data}`);
+      } else if (data.type === 'svg') {
+        setDraftImage(`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(data.content)))}`);
       } else {
-        // Fallback for text response (e.g. SVG code or description) currently just showing as alert or logic needed
-        alert("モデルが画像を返しませんでした。テキスト: " + data.content.substring(0, 100) + "...");
+        alert("モデルが画像を返しませんでした。テキスト: " + data.content.substring(0, 50) + "...");
       }
       setPhase('draft');
     } catch (e: any) { alert(e.message); }
@@ -178,7 +181,7 @@ export default function Home() {
 
   // Step 4: Final Generation
   const generateFinal = async (isRefine = false) => {
-    if (!apiKey) return;
+    // apiKey check handled by backend fallback if empty
     setLoading(true);
     setLoadingMessage(isRefine ? "修正中..." : `「${selectedStyle}」で清書中...`);
 
@@ -197,10 +200,14 @@ export default function Home() {
 
       if (data.type === 'image') {
         setFinalImage(`data:${data.mimeType};base64,${data.data}`);
-        if (!isRefine) setPhase('design'); // Ensure we are on design phase (or result view)
+      } else if (data.type === 'svg') {
+        setFinalImage(`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(data.content)))}`);
       } else {
         alert("モデルが画像を返しませんでした。テキスト: " + data.content.substring(0, 100) + "...");
       }
+
+      if (!isRefine) setPhase('design'); // Ensure we are on design phase (or result view)
+
     } catch (e: any) { alert(e.message); }
     finally { setLoading(false); }
   }

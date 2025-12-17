@@ -16,11 +16,19 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Attempt with first model, simplistic fallback logic inside route if needed, 
-        // but for now let's just use the robust one.
+        // Use a model capable of strong instruction following for SVG generation
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-        let content: any[] = [prompt];
+        let finalPrompt = prompt;
+        // Force SVG output if it's a draft/diagram request
+        if (prompt.includes("[DRAFT MODE]") || prompt.includes("Structure")) {
+            finalPrompt += "\n\nCRITICAL OUTPUT RULE: Generate the diagram as valid **SVG XML CODE** only. Do not use Markdown code blocks. Do not contain conversational text. Start with <svg and end with </svg>.";
+        } else {
+            // Even for final, if we use this model, we prefer SVG for blueprints
+            finalPrompt += "\n\nCRITICAL OUTPUT RULE: Generate a High-Quality, detailed **SVG** representation of the image. Start with <svg and end with </svg>.";
+        }
+
+        let content: any[] = [finalPrompt];
 
         if (refImages && Array.isArray(refImages)) {
             refImages.forEach((img: any) => {
@@ -84,8 +92,10 @@ export async function POST(req: Request) {
         const candidates = await result.response.candidates;
         const firstPart = candidates?.[0]?.content?.parts?.[0];
 
+        // Parse logic: Extract SVG if present, or fallback to text
         let returnData: any = {};
 
+        // Check for standard image inline data (if model returned it)
         if (firstPart?.inlineData) {
             returnData = {
                 type: "image",
@@ -93,11 +103,25 @@ export async function POST(req: Request) {
                 data: firstPart.inlineData.data
             };
         } else if (firstPart?.text) {
-            returnData = {
-                type: "text",
-                content: firstPart.text
-            };
-        }
+            // Cleaning the text to find SVG
+            const text = firstPart.text;
+            const svgStart = text.indexOf("<svg");
+            const svgEnd = text.indexOf("</svg>");
+
+            if (svgStart !== -1 && svgEnd !== -1) {
+                const svgCode = text.substring(svgStart, svgEnd + 6);
+                returnData = {
+                    type: "svg",
+                    content: svgCode
+                };
+            } else {
+                // Fallback: Just return text but mark it
+                returnData = {
+                    type: "text",
+                    content: text
+                };
+            }
+        };
 
         return NextResponse.json(returnData);
     } catch (error: any) {
