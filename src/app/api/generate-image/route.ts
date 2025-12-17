@@ -16,8 +16,8 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Use Gemini 3 model as requested by user
-        const model = genAI.getGenerativeModel({ model: "gemini-3-pro-preview" });
+        // Use Google Nano Banana Pro model as explicitly requested for image generation
+        const model = genAI.getGenerativeModel({ model: "nano-banana-pro-preview" });
 
         let finalPrompt = prompt;
 
