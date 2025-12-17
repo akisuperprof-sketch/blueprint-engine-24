@@ -8,11 +8,13 @@ export async function POST(req: Request) {
     try {
         const { apiKey, prompt, refImages } = await req.json(); // refImages: array of {data: base64, mimeType: string}
 
-        if (!apiKey) {
+        const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
+
+        if (!finalApiKey) {
             return NextResponse.json({ error: "API Key is required" }, { status: 400 });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
+        const genAI = new GoogleGenerativeAI(finalApiKey);
 
         // Attempt with first model, simplistic fallback logic inside route if needed, 
         // but for now let's just use the robust one.

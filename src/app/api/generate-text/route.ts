@@ -5,11 +5,13 @@ export async function POST(req: Request) {
     try {
         const { apiKey, prompt, image, mimeType } = await req.json();
 
-        if (!apiKey) {
+        const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
+
+        if (!finalApiKey) {
             return NextResponse.json({ error: "API Key is required" }, { status: 400 });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
+        const genAI = new GoogleGenerativeAI(finalApiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" }); // Using a fast/capable model
 
         let content: any[] = [prompt];
