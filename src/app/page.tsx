@@ -22,6 +22,7 @@ export default function Home() {
   const [apiKey, setApiKey] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false); // Collapsible Instructions State
 
   // Input Phase
   const [inputText, setInputText] = useState('');
@@ -289,6 +290,58 @@ export default function Home() {
       {/* --- PHASE 1: INPUT --- */}
       {phase === 'input' && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+          {/* Introduction Section */}
+          <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+            <h2 className="text-2xl font-bold mb-4 text-slate-900 leading-snug">
+              複雑を、美しく。あなたの頭脳のもう一つの設計エンジン。
+            </h2>
+            <div className="space-y-4 text-slate-700 leading-relaxed">
+              <p>
+                Blueprint Engine は、あなたの思考を“構造化された設計図”として瞬時に可視化するための知的エンジンです。
+                複雑な情報を理解し、要点を抽出し、最適な形式で図解・体系へと変換します。
+              </p>
+              <p>
+                企画・戦略・構造設計・教育資料・フレームワーク設計など、従来数時間かかっていた整理作業を数秒へ。
+                人間の論理思考とAIの構造化能力を融合させ、誰でも即座に「伝わる図解」を作れる世界を実現します。
+              </p>
+            </div>
+
+            {/* Collapsible Details */}
+            <div className="mt-6">
+              <button
+                onClick={() => setIsDetailsOpen(!isDetailsOpen)}
+                className="flex items-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-3 rounded-lg transition-colors border-l-4 border-red-400"
+              >
+                <ChevronRight className={`w-5 h-5 transition-transform ${isDetailsOpen ? 'rotate-90' : ''}`} />
+                詳細な機能紹介
+              </button>
+
+              {isDetailsOpen && (
+                <div className="mt-3 p-4 bg-white rounded-lg border border-slate-100 text-slate-600 space-y-4 text-sm leading-relaxed animate-in fade-in zoom-in-95 duration-200">
+                  <p>
+                    <span className="font-bold text-slate-800">Blueprint Engine</span> は、ビジネス文脈で求められる高度な「構造化」「図解化」「体系設計」を自動で行う生成ツールです。
+                    入力された文章・情報・メモから、最適な形式のブループリント（設計図）を瞬時に生成します。
+                  </p>
+                  <p>
+                    階層構造図、KPIツリー、業務フロー、戦略マップ、要因分解、スキーム図など、多様なビジネスフレームに対応。
+                  </p>
+                  <p>
+                    シンプルな指示だけで、<br />
+                    ・論理が一貫した構造<br />
+                    ・美しいインフォグラフィック<br />
+                    ・そのまま顧客提案に使える完成度<br />
+                    が整います。
+                  </p>
+                  <p>
+                    「説明が伝わらない」「考えを整理する時間がない」「資料作成に時間が取られる」
+                    そんな課題を解消し、あなたの知的生産性を最大化します。
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-blue-100 shadow-sm">
             <h2 className="text-xl font-bold mb-2 text-slate-800">01. 図解したい内容を入力</h2>
             <p className="text-sm text-slate-500 mb-4">テキスト、メモ、アイデアを入力してください。AIが最適な構造に変換します。</p>
