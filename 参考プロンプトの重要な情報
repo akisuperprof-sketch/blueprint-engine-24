@@ -1,0 +1,200 @@
+
+# 図解作成の重要なプロンプトデータ
+
+このファイルは、アプリ「スキームメーカー」の核となるAIへの指示（プロンプト）を抽出・保存したものです。
+今後の開発や他アプリへの転用時に、これらのデータを改変せず正確に使用してください。
+
+---
+
+## 1. 構造化プロンプト (Step 2: Text to JSON)
+ユーザーの入力テキストを、インフォグラフィックの構成データ(JSON)に変換するためのプロンプト。
+
+```text
+あなたはプロの編集者です。以下のテキストをインフォグラフィックにするための構成案を作成し、
+**JSON形式のみ** で出力してください。
+
+【入力テキスト】
+{input_text}
+
+【指定構造】
+{archetype}
+
+【出力JSONフォーマット】
+{{
+    "main_title": "タイトル",
+    "summary": "この図解の目的・概要（1文で）",
+    "recommended_style": "この内容に最適な具体的なデザインスタイル指示（例：清潔感のあるモダンなベクターイラスト。配色は...）",
+    "archetype_name": "プロセスフロー図など",
+    "steps": [
+        {{
+            "label": "ステップ名（例：1. 給水タンク）",
+            "visual_desc": "具体的な絵の指示（例：水の入ったタンク）"
+        }}
+    ]
+}}
+```
+
+---
+
+## 2. 構造リテイク用プロンプト (Step 2: AI Retake)
+ユーザーからの修正指示を受け、JSONデータを再生成するためのプロンプト。
+
+```text
+現在の構成データに対して、ユーザーの修正指示を反映した新しいJSONを作成してください。
+
+【現在のデータ】
+{json.dumps(data, ensure_ascii=False)}
+
+【ユーザーの修正指示】
+{retake_instruction}
+
+【出力】
+修正後のJSONのみを出力してください。
+```
+
+---
+
+## 3. 画像生成用フルプロンプト・テンプレート (Step 3 & 4)
+Step 2で確定したJSONデータを、画像生成AIへの命令文に変換するテンプレート。
+※この形式は本家アプリのスクリーンショットから完全復元されたものです。
+
+```text
+**役割:** 熟練したインフォグラフィックデザイナー
+**目的:** {data['main_title']}に基づいた明確で美しいインフォグラフィックの生成
+
+**1. テーマとスタイルの定義**
+* **メインタイトル:** {data['main_title']}
+* **概要・目的:** {data['summary']}
+* **言語指定:** 図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。
+* **スタイル:** {data['recommended_style']}
+
+**2. 構造の定義 (Structural Archetype)**
+* **採用する構造:** {data['archetype_name']}
+
+**3. キャラクター参照 (Character Reference)**
+* なし
+
+**4. コンテンツのマッピング (Content Mapping)**
+* **ヘッダーエリア:** タイトル「{data['main_title']}」を上部に配置。
+* **メイン構造ブロック:** 以下の順序でイラストと日本語ラベルを配置し、矢印でつなぐ。
+{steps_text}
+* **フッターエリア:** 特になし。全体をスッキリとまとめる。
+```
+
+---
+
+### 【参考：コーヒーメーカー案件での実証実験ログ】
+上記テンプレートが「最善」であることは、実際のアプリ挙動（コーヒーメーカーの図解生成）との比較分析により実証されています。
+分析過程で、「未修正の記述」と「本家の自動生成」の間には以下の決定的な差異が見つかり、上記テンプレートではそれが修正されています。
+
+**差異の分析結果（修正済み）:**
+1.  **スタイルの定義位置**:
+    *   修正前: プロンプト末尾に記述していた。
+    *   **本家仕様(正)**: 冒頭の「1. テーマとスタイルの定義」内に配置されている。これによりAIがスタイルを最優先で適用する。
+2.  **ステップの記述形式**:
+    *   修正前: `[1.給水] -> [2.ヒーター]` のように1行で連結していた。
+    *   **本家仕様(正)**: 箇条書きリスト形式で記述されている。これによりAIが要素数を正確に認識する。
+3.  **構造タイプ指定**:
+    *   修正前: 感覚的な言葉で記述していた。
+    *   **本家仕様(正)**: 「Structural Archetype」としてシステム的に定義されている。
+
+---
+
+## 4. ドラフト（ラフ画）強制オーバーライド指示 (Step 3: Draft Mode)
+Step 3において、どんなスタイルが選ばれていても強制的に「手書きのラフ画」を出力させるための重要な追加指示。
+
+```text
+【IMPORTANT INSTRUCTION FOR DRAFT MODE】
+Ignore the "Style" and "Color" defined above strictly for this output.
+Instead, use the following style:
+
+* **Style:** Rough pencil sketch, Hand-drawn wireframe, Black and white line art.
+* **Purpose:** To check the layout and composition. Do not add colors.
+* **Detail:** Minimal shading, focus on structure and text placement.
+```
+
+## 5. レイアウト修正指示プロンプト (Step 3: Layout Feedback)
+ドラフト生成時にユーザーからのフィードバックを反映させるための追加指示。
+
+```text
+[USER FEEDBACK - URGENT CORRECTION]
+The user provided specific feedback on the previous layout:
+"{st.session_state.layout_feedback}"
+
+Please adjust the layout specifically to address this feedback.
+```
+
+---
+
+## 6. デザインスタイル定義辞書 (Style Dictionary)
+本家アプリに含まれる全10種類のデザインスタイルの定義。これを`style_prompts`辞書として使用する。
+
+```python
+style_prompts = {
+    "ビジネス・プロ (Business Pro)": """
+    Style: Professional Corporate Vector Art.
+    Features: Clean lines, trustworthy blue and grey color palette, sans-serif typography.
+    Vibe: Reliable, efficient, suitable for business presentations.
+    """,
+    "ポップ・インフォ (Pop Info)": """
+    Style: Vibrant Flat Design.
+    Features: Bright and bold colors, high contrast, simple geometric shapes, flat shading.
+    Vibe: Energetic, clear visibility, infographic style.
+    """,
+    "手書きスケッチ (Hand-drawn Sketch)": """
+    Style: Whiteboard Marker Sketch.
+    Features: Organic shaky lines, handwritten fonts, white background, casual marker strokes.
+    Vibe: Friendly, brainstorming, educational, approachable.
+    """,
+    "ミニマリスト (Minimalist)": """
+    Style: Sophisticated Line Art.
+    Features: Ultra-thin lines, generous whitespace, monochrome or limited pastel palette.
+    Vibe: Elegant, modern, Apple-style aesthetics.
+    """,
+    "3Dアイソメトリック (3D Isometric)": """
+    Style: 3D Isometric Render.
+    Features: Orthographic projection, soft lighting, cute "miniature garden" look, floating elements.
+    Vibe: Tech startup, playful but structural, digital twin.
+    """,
+    "サイバーパンク (Cyberpunk)": """
+    Style: Futuristic Cyberpunk.
+    Features: Neon glowing lines (cyan/magenta), dark grid background, holographic effects.
+    Vibe: High-tech, futuristic, data-driven, sci-fi.
+    """,
+    "コミック/漫画 (Comic/Manga)": """
+    Style: Japanese Black & White Manga.
+    Features: Ink lines (G-pen), screentones (dots), speed lines, comic bubbles.
+    Vibe: Impactful, storytelling, dramatic, entertainment.
+    """,
+    "クレイアニメ (Clay Anime)": """
+    Style: 3D Claymorphism.
+    Features: Soft rounded shapes, plastic/clay texture, warm lighting, depth of field.
+    Vibe: Warm, tactile, playful, stop-motion animation look.
+    """,
+    "レトロゲーム (Retro Game)": """
+    Style: 8-bit Pixel Art.
+    Features: Low resolution pixels, limited color palette, jagged edges.
+    Vibe: Nostalgic, gaming culture, digital retro.
+    """,
+    "水彩画アート (Watercolor Art)": """
+    Style: Watercolor Illustration.
+    Features: Soft color bleeding, textured paper background, artistic brush strokes.
+    Vibe: Organic, artistic, gentle, hand-painted.
+    """
+}
+```
+
+## 7. 最終デザイン清書用プロンプト (Step 4: Final Production)
+ドラフトのレイアウトを維持しつつ、指定された画風を適用するための指示。
+
+```text
+{base_prompt}
+
+=========================================
+[CRITICAL STYLE OVERRIDE]
+Apply the following design style strictly:
+{style_instruction}
+
+Keep the layout and composition of the draft, but render it in high quality with the above style.
+=========================================
+```

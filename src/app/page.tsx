@@ -81,29 +81,30 @@ export default function Home() {
     setLoadingMessage("解析中... (構造化)");
     try {
       const prompt = `
-            あなたは優秀な情報デザイナーです。以下のテキストを可視化・図解するための構成案を作成し、
+            あなたはプロの編集者です。以下のテキストをインフォグラフィックにするための構成案を作成し、
             **JSON形式のみ** で出力してください。
             Markdownのコードブロックは使わず、純粋なJSON文字列のみを返してください。
 
-            【テキスト】
+            【入力テキスト】
             ${inputText}
 
             【指定構造】
             ${archetype}
 
-            【追加指示】
-            ${additionalInst}
-            
+            ${additionalInst ? `【追加指示】\n${additionalInst}` : ''}
             ${refImages.length > 0 ? `\n【参考画像あり】\n画像を参考に、その雰囲気や構造要素を取り入れてください。(画像の要素反映は「${isRefMandatory ? "必須" : "任意"}」です)` : ""}
 
-            【出力JSON形式】
+            【出力JSONフォーマット】
             {
                 "main_title": "タイトル",
-                "summary": "要約(1文)",
-                "recommended_style": "デザイン指示",
+                "summary": "この図解の目的・概要（1文で）",
+                "recommended_style": "この内容に最適な具体的なデザインスタイル指示（例：清潔感のあるモダンなベクターイラスト。配色は...）",
                 "archetype_name": "${archetype}",
                 "steps": [
-                    { "label": "見出し", "visual_desc": "絵の指示" }
+                    {
+                        "label": "ステップ名（例：1. 給水タンク）",
+                        "visual_desc": "具体的な絵の指示（例：水の入ったタンク）"
+                    }
                 ]
             }
             `;
@@ -131,7 +132,18 @@ export default function Home() {
     // apiKey check handled by backend fallback if empty
     setLoading(true);
     try {
-      const prompt = `修正指示: ${retakeInstr}\n現在のJSON: ${JSON.stringify(draftData)}\n\n上記に基づきJSONを修正して出力してください。JSONのみ。`;
+      const prompt = `
+            現在の構成データに対して、ユーザーの修正指示を反映した新しいJSONを作成してください。
+
+            【現在のデータ】
+            ${JSON.stringify(draftData)}
+
+            【ユーザーの修正指示】
+            ${retakeInstr}
+
+            【出力】
+            修正後のJSONのみを出力してください。Markdownタグ不要。
+            `;
       const res = await fetch('/api/generate-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,11 +165,58 @@ export default function Home() {
     setLoadingMessage("ラフスケッチ生成中...");
 
     // Prepare prompt
-    const stepsStr = draftData.steps?.map((s, i) => `${i + 1}. ${s.label}: ${s.visual_desc}`).join('\n') || "";
-    const basePrompt = `Title: ${draftData.main_title}\nSummary: ${draftData.summary}\nStyle: ${draftData.recommended_style}\nStructure: ${draftData.archetype_name}\nSteps:\n${stepsStr}\nTarget Language: Japanese.`;
+    const stepsStr = draftData.steps?.map((s, i) => `    ${i + 1}. **${s.label}**: ${s.visual_desc}`).join('\n') || "";
+
+    // Character Reference - Dynamic
+    const charRef = refImages.length > 0
+      ? "Reference images provided. capture the style/character from input images."
+      : "なし";
+
+    const basePrompt = `
+**役割:** 熟練したインフォグラフィックデザイナー
+**目的:** ${draftData.main_title}に基づいた明確で美しいインフォグラフィックの生成
+
+**1. テーマとスタイルの定義**
+* **メインタイトル:** ${draftData.main_title}
+* **概要・目的:** ${draftData.summary}
+* **言語指定:** 図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。
+* **スタイル:** ${draftData.recommended_style}
+
+**2. 構造の定義 (Structural Archetype)**
+* **採用する構造:** ${draftData.archetype_name}
+
+**3. キャラクター参照 (Character Reference)**
+* ${charRef}
+
+**4. コンテンツのマッピング (Content Mapping)**
+* **ヘッダーエリア:** タイトル「${draftData.main_title}」を上部に配置。
+* **メイン構造ブロック:** 以下の順序でイラストと日本語ラベルを配置し、矢印でつなぐ。
+${stepsStr}
+* **フッターエリア:** 特になし。全体をスッキリとまとめる。
+`;
     setFinalPrompt(basePrompt);
 
-    const fullPrompt = `${basePrompt}\n${layoutFeedback ? 'Fix layout: ' + layoutFeedback : ''}\n [DRAFT MODE] Simple Black & White sketch wireframe.`;
+    // Draft Override Block
+    const draftOverride = `
+【IMPORTANT INSTRUCTION FOR DRAFT MODE】
+Ignore the "Style" and "Color" defined above strictly for this output.
+Instead, use the following style:
+
+* **Style:** Rough pencil sketch, Hand-drawn wireframe, Black and white line art.
+* **Purpose:** To check the layout and composition. Do not add colors.
+* **Detail:** Minimal shading, focus on structure and text placement.
+`;
+
+    // Layout Feedback Block
+    const feedbackBlock = layoutFeedback ? `
+[USER FEEDBACK - URGENT CORRECTION]
+The user provided specific feedback on the previous layout:
+"${layoutFeedback}"
+
+Please adjust the layout specifically to address this feedback.
+` : "";
+
+    const fullPrompt = `${basePrompt}\n${feedbackBlock}\n${draftOverride}`;
 
     try {
       const res = await fetch('/api/generate-image', {
@@ -188,7 +247,21 @@ export default function Home() {
 
     const styleInstr = STYLE_PROMPTS[selectedStyle];
     const modification = isRefine ? `\n[MODIFICATION] ${refineInst}` : "";
-    const prompt = `${finalPrompt}\n[FINAL STYLE] ${styleInstr}${modification}\nHigh Quality Render. ${isRefMandatory ? "\nCRITICAL: The character/object from the reference images MUST appear in the final output as the main subject." : ""}`;
+
+    // Final Production Override
+    const prompt = `
+${finalPrompt}
+
+=========================================
+[CRITICAL STYLE OVERRIDE]
+Apply the following design style strictly:
+${styleInstr}
+${modification}
+
+Keep the layout and composition of the draft, but render it in high quality with the above style.
+${isRefMandatory ? "CRITICAL: The character/object from the reference images MUST appear in the final output as the main subject." : ""}
+=========================================
+`;
 
     try {
       const res = await fetch('/api/generate-image', {
