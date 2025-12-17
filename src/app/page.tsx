@@ -127,7 +127,7 @@ export default function Home() {
 
   // Step 2: Update Structure (Retake)
   const updateStructure = async () => {
-    if (!apiKey) return;
+    // apiKey check handled by backend fallback if empty
     setLoading(true);
     try {
       const prompt = `修正指示: ${retakeInstr}\n現在のJSON: ${JSON.stringify(draftData)}\n\n上記に基づきJSONを修正して出力してください。JSONのみ。`;
@@ -147,7 +147,7 @@ export default function Home() {
 
   // Step 3: Generate Draft
   const generateDraft = async () => {
-    if (!apiKey) return;
+    // apiKey check handled by backend fallback if empty
     setLoading(true);
     setLoadingMessage("ラフスケッチ生成中...");
 
