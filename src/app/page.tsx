@@ -407,14 +407,16 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex justify-between pt-4">
-            <button onClick={() => setPhase('input')} className="px-6 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">戻る</button>
+          <div className="flex justify-between pt-6 border-t border-slate-100 mt-6">
+            <button onClick={() => setPhase('input')} className="px-6 py-3 text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl font-bold transition-all shadow-sm">
+              ← 戻る
+            </button>
             <button
               onClick={generateDraft}
               disabled={loading}
-              className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all flex items-center gap-2"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
             >
-              {loading ? '生成中...' : <>ドラフト作成 <ChevronRight className="w-4 h-4" /></>}
+              {loading ? '生成中...' : <>ドラフト作成 <ChevronRight className="w-5 h-5" /></>}
             </button>
           </div>
         </div>
