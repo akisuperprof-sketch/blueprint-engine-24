@@ -222,16 +222,24 @@ export default function Home() {
       { id: 'design', label: '04. デザイン' },
     ];
 
+    // Define order for index comparison
+    const phaseOrder = ['input', 'struct', 'draft', 'design'];
+    const currentPhaseIdx = phaseOrder.indexOf(phase);
+
     return (
       <div className="flex w-full justify-between items-center bg-white/70 backdrop-blur-md rounded-xl p-3 border border-slate-200 shadow-sm mb-6">
         {steps.map((s, idx) => {
           const isActive = phase === s.id;
-          // Logic checks: can only go back or stay, unless strictly debugging. 
-          // Simple logic: Highlight current.
+          const isPast = idx < currentPhaseIdx;
+          const isClickable = isPast; // Only allow going back
+
           return (
             <div
               key={s.id}
-              className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all ${isActive ? 'shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+              onClick={() => isClickable && setPhase(s.id as any)}
+              className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all 
+                ${isActive ? 'shadow-md' : ''} 
+                ${isClickable ? 'cursor-pointer hover:bg-slate-100 text-slate-600' : isActive ? '' : 'text-slate-300 cursor-not-allowed'}`}
               style={{
                 backgroundColor: isActive ? '#2563EB' : 'transparent',
                 color: isActive ? '#ffffff' : undefined
