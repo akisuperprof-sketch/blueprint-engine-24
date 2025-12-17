@@ -103,29 +103,34 @@ export async function POST(req: Request) {
                 data: firstPart.inlineData.data
             };
         } else if (firstPart?.text) {
-            // Cleaning the text to find SVG
             const text = firstPart.text;
-            const svgStart = text.indexOf("<svg");
-            const svgEnd = text.indexOf("</svg>");
 
-            if (svgStart !== -1 && svgEnd !== -1) {
-                let svgCode = text.substring(svgStart, svgEnd + 6);
+            // Regex to find SVG block, ignoring surrounding markdown or text
+            // Case insensitive for tag name, handles newlines with [\s\S]
+            const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
 
+            if (svgMatch) {
+                let svgCode = svgMatch[0];
                 // Ensure xmlns exists for valid data-uri rendering
                 if (!svgCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
-                    svgCode = svgCode.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+                    svgCode = svgCode.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
                 }
-
-                returnData = {
-                    type: "svg",
-                    content: svgCode
-                };
+                returnData = { type: "svg", content: svgCode };
             } else {
-                // Fallback: Just return text but mark it
-                returnData = {
-                    type: "text",
-                    content: text
-                };
+                // Fallback: Check if it STARTS with <svg but maybe truncated or missing closing tag
+                const startMatch = text.match(/<svg/i);
+                if (startMatch) {
+                    let svgCode = text.substring(startMatch.index!);
+                    if (!svgCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                        svgCode = svgCode.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
+                    if (!svgCode.match(/<\/svg>/i)) {
+                        svgCode += "</svg>";
+                    }
+                    returnData = { type: "svg", content: svgCode };
+                } else {
+                    returnData = { type: "text", content: text };
+                }
             }
         };
 
