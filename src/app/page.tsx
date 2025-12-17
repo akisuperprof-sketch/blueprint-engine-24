@@ -343,11 +343,20 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
   return (
     <main className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
+      {/* Header */}
+      <div className="relative flex justify-center items-center mb-8 h-16">
+        {/* Left: Logo */}
+        <div className="absolute left-0 flex items-center gap-3">
           <Image src="/logo.png" alt="Scheme Maker Logo" width={200} height={50} className="h-10 w-auto object-contain" />
         </div>
-        <div className="flex gap-2">
+
+        {/* Center: Title with Animation */}
+        <div className="text-2xl md:text-3xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-600 animate-text-shimmer bg-[length:200%_auto]">
+          ブループリントエンジン24
+        </div>
+
+        {/* Right: Settings */}
+        <div className="absolute right-0 flex gap-2">
           <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="p-2 rounded-full bg-white border border-slate-200 hover:bg-slate-50 shadow-sm">
             <Settings className="w-5 h-5 text-slate-600" />
           </button>
