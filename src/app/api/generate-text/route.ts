@@ -12,23 +12,34 @@ export async function POST(req: Request) {
         }
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" }); // Using a fast/capable model
 
-        let content: any[] = [prompt];
-
-        if (image && mimeType) {
-            // user passed base64 image
-            content.push({
-                inlineData: {
-                    data: image,
-                    mimeType: mimeType
+        // --- Primary Model Call ---
+        let text = "";
+        try {
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+            let content: any[] = [prompt];
+            if (image && mimeType) {
+                content.push({ inlineData: { data: image, mimeType: mimeType } });
+            }
+            const result = await model.generateContent(content);
+            const response = await result.response;
+            text = response.text();
+        } catch (primaryError: any) {
+            console.error("Primary text model failed, trying fallback:", primaryError.message);
+            // --- Fallback Model Call (Gemini 1.5 Flash is more stable and has higher quota) ---
+            if (primaryError.message.toLowerCase().includes('quota') || primaryError.message.toLowerCase().includes('429') || primaryError.message.toLowerCase().includes('exhausted')) {
+                const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                let content: any[] = [prompt];
+                if (image && mimeType) {
+                    content.push({ inlineData: { data: image, mimeType: mimeType } });
                 }
-            });
+                const result = await fallbackModel.generateContent(content);
+                const response = await result.response;
+                text = response.text();
+            } else {
+                throw primaryError;
+            }
         }
-
-        const result = await model.generateContent(content);
-        const response = await result.response;
-        const text = response.text();
 
         return NextResponse.json({ text });
     } catch (error: any) {

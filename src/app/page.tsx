@@ -612,7 +612,9 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               <div className="flex items-center gap-2 mb-2">
                 <span className={`w-3 h-3 rounded-full ${apiKey ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`}></span>
                 <span className="text-xs font-bold text-slate-600">
-                  {apiKey ? '個人のキーを適用中 (優先)' : '共有キーを使用中 (利用制限あり)'}
+                  {apiKey
+                    ? `個人のキーを適用中 (末尾: ...${apiKey.slice(-4)})`
+                    : '共有キーを使用中 (利用制限あり)'}
                 </span>
               </div>
               <input
