@@ -607,17 +607,27 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5 text-slate-500" /> API設定
             </h2>
-            <p className="text-sm text-slate-500 mb-4">
-              Google Gemini APIキーを入力してください。<br />
-              <span className="text-xs text-slate-400">※ブラウザに保存され、サーバーには保存されません。</span>
-            </p>
-            <input
-              type="password"
-              placeholder="AIzaSy..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-3 mb-6 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
-            />
+            <div className="mb-4">
+              <label className="text-sm font-bold text-slate-700 block mb-1">Google Gemini APIキー</label>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`w-3 h-3 rounded-full ${apiKey ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`}></span>
+                <span className="text-xs font-bold text-slate-600">
+                  {apiKey ? '個人のキーを適用中 (優先)' : '共有キーを使用中 (利用制限あり)'}
+                </span>
+              </div>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={apiKey}
+                onChange={(e) => saveApiKey(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+              />
+              {!apiKey && (
+                <p className="text-[10px] text-amber-600 mt-1 leading-tight">
+                  ※共有キーは回数制限が厳しいため、エラーが出る場合はご自身のキーを設定してください。
+                </p>
+              )}
+            </div>
             <button
               onClick={() => setIsSettingsOpen(false)}
               className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors"
