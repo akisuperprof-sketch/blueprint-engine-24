@@ -34,6 +34,35 @@
 *   **Draft Mode:** スタイル指定を無視し、白黒のラフスケッチを強制するオーバーライドブロックを実装。
 *   **Final Mode:** ドラフトの構図を維持しつつ、指定スタイル（ビジネス・プロ、ポップ・インフォ等）を厳密に適用するオーバーライドブロックを実装。
 
+### 3.5. Advanced Prompt Editing
+*   **Step 2 (Structure):**
+    *   Added a toggleable section for "Advanced: Edit Draft Prompt".
+    *   Allows users to intercept and modify the prompt sent for draft generation.
+    *   Visual warning added to indicate manual overrides.
+*   **Step 3 (Draft & Refine):**
+    *   Added "Advanced: Edit Final Prompt" section.
+    *   Allows fine-tuning of the final high-fidelity generation prompt.
+
+### 3.6. History System
+*   **Functionality:**
+    *   Automatically saves generated final images and their metadata (prompts, title, settings) to `localStorage`.
+    *   "History" button in the header opens a modal to view past creations.
+    *   Users can load a previous state or delete items.
+*   **Data Stored:** Timestamp, Final Image (Base64), Title, Prompts, Config.
+
+## 4. Implementation Details
+*   **Framework:** Next.js (App Router), React, Tailwind CSS.
+*   **Icons:** Lucide React.
+*   **State Management:** React `useState` & `localStorage` for history.
+*   **AI Integration:**
+    *   Text/Structure: `gemini-1.5-pro` via `/api/generate-text`.
+    *   Image Generation: `gemini-1.5-pro` (or equivalent) via `/api/generate-image`.
+*   **UI/UX:**
+    *   Clean, step-by-step wizard.
+    *   Blue-themed aesthetics.
+    *   Animated transitions.
+    *   Visual feedback for loading/actions.
+
 ## 直近の変更履歴 (2025-12-18)
 1.  **プロンプト完全刷新:** 4段階の生成フローにおけるプロンプトを「Scheme Maker」完全再現仕様に更新。
 2.  **多言語対応実装:** 言語選択UIと動的プロンプト変数の導入。

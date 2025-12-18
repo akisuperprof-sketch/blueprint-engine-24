@@ -16,6 +16,16 @@ interface DraftData {
   steps?: { label: string; visual_desc: string }[];
 }
 
+interface HistoryItem {
+  id: string;
+  timestamp: number;
+  finalImage: string;
+  main_title: string;
+  summary: string;
+  finalPrompt: string;
+  draftData: DraftData;
+}
+
 export default function Home() {
   // Session State
   const [phase, setPhase] = useState<Phase>('input');
@@ -24,6 +34,7 @@ export default function Home() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false); // Collapsible Instructions State
   const [isPromptEditOpen, setIsPromptEditOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   // Input Phase
   const [inputText, setInputText] = useState('');
@@ -53,7 +64,51 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
 
+  // Load History on Mount
+  useEffect(() => {
+    const saved = localStorage.getItem('scheme_maker_history');
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
+  }, []);
+
   // --- Helpers ---
+  const saveToHistory = (imageUrl: string, prompt: string) => {
+    const newItem: HistoryItem = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      finalImage: imageUrl,
+      main_title: draftData.main_title || '無題',
+      summary: draftData.summary || '',
+      finalPrompt: prompt,
+      draftData: draftData
+    };
+    const newHistory = [newItem, ...history];
+    setHistory(newHistory);
+    localStorage.setItem('scheme_maker_history', JSON.stringify(newHistory));
+  };
+
+  const deleteHistory = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('この履歴を削除しますか？')) return;
+    const newHistory = history.filter(item => item.id !== id);
+    setHistory(newHistory);
+    localStorage.setItem('scheme_maker_history', JSON.stringify(newHistory));
+  };
+
+  const loadHistoryItem = (item: HistoryItem) => {
+    if (!confirm('現在の作業内容は上書きされます。よろしいですか？')) return;
+    setFinalImage(item.finalImage);
+    setFinalPrompt(item.finalPrompt);
+    setDraftData(item.draftData);
+    setPhase('design');
+    setIsHistoryOpen(false);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
@@ -230,50 +285,17 @@ ${stepsStr}
     try {
       let final_prompt_text = "";
 
-      // Assuming isDraftPromptEditOpen and manualDraftPrompt are defined elsewhere or will be added.
-      // Assuming constructDraftPrompt() is a helper function that constructs the prompt based on current state.
-      if (isPromptEditOpen && finalPrompt) { // Re-using isPromptEditOpen and finalPrompt for simplicity, assuming they might be repurposed or new ones added.
+      if (isDraftPromptEditOpen && manualDraftPrompt) {
         // USE MANUAL PROMPT
-        final_prompt_text = finalPrompt; // Using finalPrompt as manualDraftPrompt
+        final_prompt_text = manualDraftPrompt;
       } else {
-        // GENERATE FROM FORM (Existing Logic)
-        // This part needs to be constructed based on the original logic of generateDraft
-        const stepsStr = draftData.steps?.map((s: any, i: number) => `    ${i + 1}. **${s.label}**: ${s.visual_desc}`).join('\n') || "";
-        const charRef = refImages.length > 0 ? "Reference images provided. capture the style/character from input images." : "なし";
-        let langInstruction = targetLanguage === 'Japanese' ? "図中のテキストラベルは**すべて日本語**で記述すること。" : `All text labels inside the image MUST be in **${targetLanguage}**.`;
-
-        const basePrompt = `
-**役割:** 熟練したインフォグラフィックデザイナー
-**目的:** ${draftData.main_title}に基づいた明確で美しいインフォグラフィックのラフスケッチ生成
-
-**1. テーマとスタイルの定義**
-* **メインタイトル:** ${draftData.main_title}
-* **概要・目的:** ${draftData.summary}
-* **言語指定:** ${langInstruction}
-* **推奨スタイル:** ${draftData.recommended_style || 'モダンで清潔感のあるベクターイラスト'}
-
-**2. 構造の定義 (Structural Archetype)**
-* **採用する構造:** ${draftData.archetype_name}
-
-**3. キャラクター参照 (Character Reference)**
-* ${charRef}
-
-**4. コンテンツのマッピング (Content Mapping)**
-* **ヘッダーエリア:** タイトル「${draftData.main_title}」を上部に配置。
-* **メイン構造ブロック:** 以下の順序でイラストと日本語ラベルを配置し、矢印でつなぐ。
-${stepsStr}
-* **フッターエリア:** 特になし。全体をスッキリとまとめる。
-
-【重要】これは最終的なデザインではなく、あくまで「ラフスケッチ」です。
-* 線画、または非常にシンプルな塗り分けで構成してください。
-* 色は最小限に抑え、構造と配置が明確にわかるようにしてください。
-* テキストはプレースホルダーで構いませんが、配置は正確に。
-* 複雑なテクスチャや詳細な描写は不要です。
-`;
-        final_prompt_text = basePrompt;
+        final_prompt_text = constructDraftPrompt();
       }
 
       setLoadingMessage("ラフスケッチ生成中...");
+
+      // Update finalPrompt state for next step editing
+      setFinalPrompt(final_prompt_text);
 
       const res = await fetch('/api/generate-image', {
         method: 'POST',
@@ -301,50 +323,94 @@ ${stepsStr}
 
   // Step 4: Final Generation
   const generateFinal = async (isRefine = false) => {
-    // apiKey check handled by backend fallback if empty
+    if (!apiKey) { setIsSettingsOpen(true); return; }
     setLoading(true);
-    setLoadingMessage(isRefine ? "修正中..." : `「${selectedStyle}」で清書中...`);
-
-    const styleInstr = STYLE_PROMPTS[selectedStyle];
-    const modification = isRefine ? `\n[MODIFICATION] ${refineInst} ` : "";
-
-    // Final Production Override
-    const prompt = `
-${finalPrompt}
-
-=========================================
-[CRITICAL STYLE OVERRIDE]
-Apply the following design style strictly:
-${styleInstr}
-${modification}
-
-Keep the layout and composition of the draft, but render it in high quality with the above style.
-${isRefMandatory ? "CRITICAL: The character/object from the reference images MUST appear in the final output as the main subject." : ""}
-=========================================
-`;
+    setLoadingMessage(isRefine ? "微調整中..." : "清書中... (高品質生成)");
 
     try {
+      let promptToUse = "";
+
+      // 1. Determine Prompt Source
+      if (isRefine) {
+        promptToUse = `
+The user wants to refine the previous image based on this feedback: "${refineInst}".
+Keep the original composition but apply the correction.
+original_prompt: ${finalPrompt}
+            `;
+      } else {
+        // If manual prompt edit is OPEN, use that.
+        if (isPromptEditOpen && finalPrompt) {
+          promptToUse = finalPrompt;
+        } else {
+          // Otherwise construct standard Final Prompt
+          const styleP = STYLE_PROMPTS[selectedStyle] || "";
+          // Use draftData if available, else fallback
+          const mainTitle = draftData.main_title || "Untitled";
+
+          let langInstruction = targetLanguage === 'Japanese'
+            ? "Ensure all text labels properly rendered in valid Japanese characters."
+            : `Ensure all text labels are in **${targetLanguage}**.`;
+
+          promptToUse = `
+**Role:** Expert Infographic Illustrator
+**Goal:** Create a polished, high-quality infographic based on the signed-off draft logic.
+
+**Visual Style:** ${selectedStyle.split('(')[0]}
+${styleP}
+
+**Content Requirements:**
+* **Title:** ${mainTitle}
+* **Language:** ${langInstruction}
+* **Structure:** Follow the 'Content Mapping' strictly.
+
+**Technical Constraints:**
+* Aspect Ratio: 3:4 (Vertical) or 16:9 (if requested) - Optimized for SNS.
+* Text: Must be legible, distinct from background.
+* Output: High Fidelity, rich colors, professional finish.
+
+${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
+`;
+          // Also update the finalPrompt state so user sees it in "Advanced" if they open it
+          setFinalPrompt(promptToUse);
+        }
+      }
+
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey, prompt, refImages })
+        body: JSON.stringify({
+          prompt: promptToUse,
+          apiKey: apiKey,
+          refImages: isRefine ? [] : (draftImage ? [{ data: draftImage.split(',')[1], mimeType: "image/png" }] : []) // Use draft as ref for final if possible, or just raw prompt
+          // Note: For pure Gemini 1.5 Pro image gen, structure adherence from image input is tricky.
+          // Better strategy: Just use the strong prompt + style. We pass draftImage just in case model supports it.
+        })
       });
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
+      let resultUrl = "";
       if (data.type === 'image') {
-        setFinalImage(`data:${data.mimeType};base64,${data.data}`);
-      } else if (data.type === 'svg') {
-        setFinalImage(`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(data.content)))}`);
+        resultUrl = `data:${data.mimeType};base64,${data.data}`;
+        setFinalImage(resultUrl);
       } else {
-        alert("モデルが画像を返しませんでした。テキスト: " + data.content.substring(0, 100) + "...");
+        alert("Error format");
       }
 
-      if (!isRefine) setPhase('design'); // Ensure we are on design phase (or result view)
+      // Auto Save to History
+      if (resultUrl) {
+        saveToHistory(resultUrl, promptToUse);
+      }
 
-    } catch (e: any) { alert(e.message); }
-    finally { setLoading(false); }
-  }
+      setPhase('design');
+
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // --- Render Logic ---
@@ -388,39 +454,105 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
   }
 
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
+    <main className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 pb-20">
+
       {/* Header */}
-      {/* Header */}
-      <div className="relative flex justify-center items-center mb-8 h-16">
-        {/* Left: Logo */}
-        <div className="absolute left-0 flex items-center gap-3">
-          <Image src="/logo.png" alt="Scheme Maker Logo" width={200} height={50} className="h-10 w-auto object-contain" />
-        </div>
-
-        {/* Center: Title with Animation */}
-        <div className="text-2xl md:text-3xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-600 animate-text-shimmer bg-[length:200%_auto]">
-          ブループリントエンジン24
-        </div>
-
-        {/* Right: Settings */}
-        <div className="absolute right-0 flex gap-2">
-          <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="p-2 rounded-full bg-white border border-slate-200 hover:bg-slate-50 shadow-sm">
-            <Settings className="w-5 h-5 text-slate-600" />
-          </button>
-        </div>
-      </div>
-
-      {/* Settings Modal */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">設定</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
-              <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter your key..." />
-              <p className="text-xs text-slate-400 mt-1">※ブラウザに一時的に保存されます (Refreshで消えます)</p>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg shadow-blue-500/30 shadow-lg">
+              B
             </div>
-            <button onClick={() => setIsSettingsOpen(false)} className="w-full bg-slate-900 text-white py-2 rounded-lg hover:bg-slate-800">閉じる</button>
+            <h1 className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              ブループリントエンジン24
+            </h1>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setIsHistoryOpen(true)}
+              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+              title="履歴"
+            >
+              <Clock className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+              title="設定"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* History Modal */}
+      {isHistoryOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex justify-end transition-opacity">
+          <div className="w-96 bg-white h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-500" /> 生成履歴
+              </h2>
+              <button onClick={() => setIsHistoryOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+
+            {history.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-10">履歴はまだありません。</p>
+            ) : (
+              <div className="space-y-4">
+                {history.map(item => (
+                  <div key={item.id} className="group relative bg-slate-50 rounded-xl overflow-hidden border border-slate-200 hover:border-blue-400 transition-all cursor-pointer" onClick={() => loadHistoryItem(item)}>
+                    <div className="aspect-video bg-slate-200 relative">
+                      <img src={item.finalImage} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-bold text-sm text-slate-800 truncate mb-1">{item.main_title}</h3>
+                      <p className="text-xs text-slate-500">{new Date(item.timestamp).toLocaleString()}</p>
+                    </div>
+                    <button
+                      onClick={(e) => deleteHistory(item.id, e)}
+                      className="absolute top-2 right-2 bg-white/80 p-1.5 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                      title="削除"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal - Keep as is but ensure close handler */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-slate-500" /> API設定
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Google Gemini APIキーを入力してください。<br />
+              <span className="text-xs text-slate-400">※ブラウザに保存され、サーバーには保存されません。</span>
+            </p>
+            <input
+              type="password"
+              placeholder="AIzaSy..."
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="w-full border border-slate-300 rounded-lg p-3 mb-6 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+            />
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              設定を保存して閉じる
+            </button>
+            <div className="mt-4 text-center">
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-xs text-blue-500 hover:underline">APIキーを取得する (Google AI Studio)</a>
+            </div>
           </div>
         </div>
       )}
