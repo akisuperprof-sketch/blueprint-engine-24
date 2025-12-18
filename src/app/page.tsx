@@ -68,17 +68,22 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
 
-  // Load History on Mount
+  // Load Settings on Mount
   useEffect(() => {
-    const saved = localStorage.getItem('scheme_maker_history');
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse history", e);
-      }
+    const savedHistory = localStorage.getItem('scheme_maker_history');
+    if (savedHistory) {
+      try { setHistory(JSON.parse(savedHistory)); } catch (e) { console.error(e); }
+    }
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
     }
   }, []);
+
+  const saveApiKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('gemini_api_key', key);
+  };
 
   // --- Helpers ---
   const saveToHistory = (imageUrl: string, prompt: string) => {
@@ -118,9 +123,35 @@ export default function Home() {
       const files = Array.from(e.target.files);
       files.forEach(file => {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = (reader.result as string).split(',')[1];
-          setRefImages(prev => [...prev, { data: base64String, mimeType: file.type }]);
+        reader.onload = (event) => {
+          const img = new (window as any).Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxSide = 1000;
+
+            if (width > height) {
+              if (width > maxSide) {
+                height *= maxSide / width;
+                width = maxSide;
+              }
+            } else {
+              if (height > maxSide) {
+                width *= maxSide / height;
+                height = maxSide;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            setRefImages(prev => [...prev, { data: compressedBase64, mimeType: 'image/jpeg' }]);
+          };
+          img.src = event.target?.result;
         };
         reader.readAsDataURL(file);
       });
@@ -574,7 +605,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               type="password"
               placeholder="AIzaSy..."
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={(e) => saveApiKey(e.target.value)}
               className="w-full border border-slate-300 rounded-lg p-3 mb-6 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
             />
             <button
