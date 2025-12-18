@@ -51,25 +51,17 @@
 
 ### 3.7. System & Deployment
 *   **API Key Handling:**
-    *   クライアントサイドでの厳格な入力チェックを緩和。
-    *   入力がない場合、サーバーサイド (`route.ts`) で環境変数 `GEMINI_API_KEY` へのフォールバックを許容する仕様に変更（Vercel対応）。
+    *   **Step 1:** APIキー入力欄が空の場合、テキスト入力文字数（5文字以上）のみをチェックして処理を開始する（サーバーサイドの環境変数 `GEMINI_API_KEY` を利用）。
+    *   **Step 3/4:** 生成ボタン押下時のクライアントサイドAPIキー必須チェックを削除。サーバーサイドでキーが存在すれば実行可能とする（Vercel対応）。
 
-## 4. Implementation Details
-*   **Framework:** Next.js (App Router), React, Tailwind CSS.
-*   **Icons:** Lucide React.
-*   **State Management:** React `useState` & `localStorage` for history.
-*   **AI Integration:**
-    *   Text/Structure: `gemini-1.5-pro` via `/api/generate-text`.
-    *   Image Generation: `gemini-1.5-pro` (or equivalent) via `/api/generate-image`.
-*   **UI/UX:**
-    *   Clean, step-by-step wizard.
-    *   Blue-themed aesthetics.
-    *   Animated transitions.
-    *   Visual feedback for loading/actions.
+### 3.8. UI Layout Updates
+*   **Step 2 (構成案確認):**
+    *   **AI修正指示 (AI Update):** ヘッダーエリアから削除し、構成要素編集エリアの下部（「上級者向けプロンプト編集」の直上）に移動配置。編集フローの自然な流れに最適化。
 
 ## 直近の変更履歴 (2025-12-18)
 1.  **プロンプト完全刷新:** 4段階の生成フローにおけるプロンプトを「Scheme Maker」完全再現仕様に更新。
 2.  **多言語対応実装:** 言語選択UIと動的プロンプト変数の導入。
 3.  **UI/Brand改修:** ロゴ・ファビコンの実装、ヘッダータイトルのアニメーション化、アイコン視認性向上。
 4.  **安全なプロンプト編集機能:** 上級者向け編集機能に「適用チェックボックス」を追加し、意図しない上書きを防止。
-5.  **デプロイ対応:** Vercel環境変数利用のためのAPIキー検証ロジック緩和。
+5.  **デプロイ対応:** Vercel環境変数利用のためのAPIキー検証ロジック緩和（Step 1の文字数チェックのみに変更）。
+6.  **UI配置最適化:** AI修正指示エリアをStep 2下部に移動し、操作性を向上。
