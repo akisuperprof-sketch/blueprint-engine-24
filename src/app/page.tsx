@@ -596,6 +596,36 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
                   </div>
                 ))}
               </div>
+              </div>
+
+              {/* Advanced Draft Prompt Editor */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-8">
+                 <button 
+                    onClick={handleDraftPromptEditToggle}
+                    className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm hover:text-blue-600 transition-colors"
+                 >
+                    <span className="flex items-center gap-2">
+                        <Settings className="w-4 h-4 text-slate-400" /> 上級者向け: ドラフト生成プロンプトの編集
+                    </span>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${isDraftPromptEditOpen ? 'rotate-90' : ''}`} />
+                 </button>
+                 
+                 {isDraftPromptEditOpen && (
+                    <div className="mt-4 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-3 border border-yellow-100 flex gap-2 items-start">
+                           <span className="text-lg">⚠️</span>
+                           <div>
+                               <strong>注意:</strong> こちらを編集・有効化している間は、<strong>上のフォームの内容（タイトル変更など）は無視され</strong>、以下のプロンプトがそのまま使用されます。
+                           </div>
+                        </div>
+                        <textarea
+                            value={manualDraftPrompt}
+                            onChange={(e) => setManualDraftPrompt(e.target.value)}
+                            className="w-full h-64 p-3 text-xs font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
+                        />
+                    </div>
+                 )}
+              </div>
             </div>
           </div>
 
@@ -612,225 +642,232 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
             </button>
           </div>
         </div>
-      )}
+  )
+}
 
-      {/* --- PHASE 3: DRAFT --- */}
-      {phase === 'draft' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Left: Draft Image */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-slate-400" /> ドラフト (ラフ画)
-              </h3>
-              <div className="flex-1 bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center min-h-[400px]">
-                {draftImage ? (
-                  <img src={draftImage} className="max-w-full max-h-full object-contain" />
-                ) : (
-                  <div className="text-slate-400">画像なし</div>
-                )}
-              </div>
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-sm text-yellow-800">
-                💡 <strong>Check:</strong> 配置や矢印の流れは正しいですか？配色はまだ適用されていません。
-              </div>
+{/* --- PHASE 3: DRAFT --- */ }
+{
+  phase === 'draft' && (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Left: Draft Image */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+            <Edit3 className="w-5 h-5 text-slate-400" /> ドラフト (ラフ画)
+          </h3>
+          <div className="flex-1 bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center min-h-[400px]">
+            {draftImage ? (
+              <img src={draftImage} className="max-w-full max-h-full object-contain" />
+            ) : (
+              <div className="text-slate-400">画像なし</div>
+            )}
+          </div>
+          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-sm text-yellow-800">
+            💡 <strong>Check:</strong> 配置や矢印の流れは正しいですか？配色はまだ適用されていません。
+          </div>
 
-              {/* Layout Feedback */}
-              <div className="mt-4">
-                <label className="text-xs font-bold text-slate-500 mb-1 block">レイアウトの修正指示 (ドラフト再生成)</label>
-                <div className="flex gap-2">
-                  <input
-                    value={layoutFeedback}
-                    onChange={(e) => setLayoutFeedback(e.target.value)}
-                    placeholder="例: タイトルをもっと大きく、Step1と2を離して..."
-                    className="flex-1 p-2 text-sm border border-slate-200 rounded-lg"
-                  />
-                  <button
-                    onClick={generateDraft}
-                    disabled={loading}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold"
-                  >
-                    再ドラフト
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Style & Finalize */}
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-blue-500" /> デザインスタイルの選択
-                </h3>
-                <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                  {Object.keys(STYLE_PROMPTS).map((styleName) => (
-                    <div
-                      key={styleName}
-                      onClick={() => setSelectedStyle(styleName)}
-                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedStyle === styleName
-                        ? 'border-blue-500 bg-blue-50/50'
-                        : 'border-slate-100 hover:border-blue-200'
-                        }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm ${selectedStyle === styleName ? 'bg-blue-100' : 'bg-white'}`}>
-                        {STYLE_ICONS[styleName] || '🎨'}
-                      </div>
-                      <div>
-                        <div className={`font-bold text-sm ${selectedStyle === styleName ? 'text-blue-700' : 'text-slate-700'}`}>
-                          {styleName}
-                        </div>
-                      </div>
-                      {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Advanced Prompt Editor */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <button
-                  onClick={() => setIsPromptEditOpen(!isPromptEditOpen)}
-                  className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm"
-                >
-                  <span className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-slate-400" /> 上級者向け: プロンプト（指示文）の編集
-                  </span>
-                  <ChevronRight className={`w-4 h-4 transition-transform ${isPromptEditOpen ? 'rotate-90' : ''}`} />
-                </button>
-
-                {isPromptEditOpen && (
-                  <div className="mt-3 animate-in fade-in zoom-in-95 duration-200">
-                    <p className="text-xs text-slate-500 mb-2">
-                      ※ここはAIへの最終的な指示文です。自動生成された内容を直接調整したい場合のみ編集してください。
-                    </p>
-                    <textarea
-                      value={finalPrompt}
-                      onChange={(e) => setFinalPrompt(e.target.value)}
-                      className="w-full h-64 p-3 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-4">
-                <button
-                  onClick={() => generateFinal(false)}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2"
-                >
-                  {loading ? '生成中...' : <>デザイン清書を実行 <Download className="w-5 h-5" /></>}
-                </button>
-                <div className="text-center mt-3">
-                  <button onClick={() => setPhase('struct')} className="text-slate-400 text-sm hover:text-slate-600">
-                    ← 構成に戻る
-                  </button>
-                </div>
-              </div>
+          {/* Layout Feedback */}
+          <div className="mt-4">
+            <label className="text-xs font-bold text-slate-500 mb-1 block">レイアウトの修正指示 (ドラフト再生成)</label>
+            <div className="flex gap-2">
+              <input
+                value={layoutFeedback}
+                onChange={(e) => setLayoutFeedback(e.target.value)}
+                placeholder="例: タイトルをもっと大きく、Step1と2を離して..."
+                className="flex-1 p-2 text-sm border border-slate-200 rounded-lg"
+              />
+              <button
+                onClick={generateDraft}
+                disabled={loading}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold"
+              >
+                再ドラフト
+              </button>
             </div>
           </div>
         </div>
-      )}
 
-      {/* --- PHASE 4: DESIGN & RESULT --- */}
-      {phase === 'design' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {!finalImage ? (
-            <>
-              <h2 className="text-xl font-bold text-slate-800 mb-4">04. デザインスタイル選択</h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {Object.keys(STYLE_PROMPTS).map((styleName) => {
-                  const meta = STYLE_ICONS[styleName];
-                  const isSelected = selectedStyle === styleName;
-                  return (
-                    <button
-                      key={styleName}
-                      onClick={() => setSelectedStyle(styleName)}
-                      className={`relative p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 text-center
+        {/* Right: Style & Finalize */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-blue-500" /> デザインスタイルの選択
+            </h3>
+            <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2">
+              {Object.keys(STYLE_PROMPTS).map((styleName) => (
+                <div
+                  key={styleName}
+                  onClick={() => setSelectedStyle(styleName)}
+                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedStyle === styleName
+                    ? 'border-blue-500 bg-blue-50/50'
+                    : 'border-slate-100 hover:border-blue-200'
+                    }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl shadow-sm ${selectedStyle === styleName ? 'bg-blue-100' : 'bg-white'}`}>
+                    {STYLE_ICONS[styleName] || '🎨'}
+                  </div>
+                  <div>
+                    <div className={`font-bold text-sm ${selectedStyle === styleName ? 'text-blue-700' : 'text-slate-700'}`}>
+                      {styleName}
+                    </div>
+                  </div>
+                  {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Advanced Prompt Editor */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <button
+              onClick={() => setIsPromptEditOpen(!isPromptEditOpen)}
+              className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm"
+            >
+              <span className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-slate-400" /> 上級者向け: プロンプト（指示文）の編集
+              </span>
+              <ChevronRight className={`w-4 h-4 transition-transform ${isPromptEditOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            {isPromptEditOpen && (
+              <div className="mt-3 animate-in fade-in zoom-in-95 duration-200">
+                <p className="text-xs text-slate-500 mb-2">
+                  ※ここはAIへの最終的な指示文です。自動生成された内容を直接調整したい場合のみ編集してください。
+                </p>
+                <textarea
+                  value={finalPrompt}
+                  onChange={(e) => setFinalPrompt(e.target.value)}
+                  className="w-full h-64 p-3 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4">
+            <button
+              onClick={() => generateFinal(false)}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2"
+            >
+              {loading ? '生成中...' : <>デザイン清書を実行 <Download className="w-5 h-5" /></>}
+            </button>
+            <div className="text-center mt-3">
+              <button onClick={() => setPhase('struct')} className="text-slate-400 text-sm hover:text-slate-600">
+                ← 構成に戻る
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+{/* --- PHASE 4: DESIGN & RESULT --- */ }
+{
+  phase === 'design' && (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {!finalImage ? (
+        <>
+          <h2 className="text-xl font-bold text-slate-800 mb-4">04. デザインスタイル選択</h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {Object.keys(STYLE_PROMPTS).map((styleName) => {
+              const meta = STYLE_ICONS[styleName];
+              const isSelected = selectedStyle === styleName;
+              return (
+                <button
+                  key={styleName}
+                  onClick={() => setSelectedStyle(styleName)}
+                  className={`relative p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 text-center
                                         ${isSelected ? 'border-blue-600 bg-blue-50/80 shadow-md transform scale-105' : 'border-slate-100 bg-white/60 hover:border-slate-300'}
                                     `}
-                    >
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: meta.color }}>
-                        {meta.icon}
-                      </div>
-                      <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-800' : 'text-slate-600'}`}>{styleName.split('(')[0]}</span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={() => generateFinal(false)}
-                  disabled={loading}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-10 py-3 rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
                 >
-                  {loading ? '清書中...' : '💫 完成画像を生成する'}
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: meta.color }}>
+                    {meta.icon}
+                  </div>
+                  <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-800' : 'text-slate-600'}`}>{styleName.split('(')[0]}</span>
                 </button>
-              </div>
-            </>
-          ) : (
-            // RESULT VIEW
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-2 md:p-4 border border-slate-200 shadow-lg max-w-4xl mx-auto">
-                <div className="flex justify-between items-center mb-4 px-2">
-                  <h3 className="font-bold text-slate-700">🎉 Completed</h3>
-                  <div className="flex gap-2">
-                    <button onClick={() => setFinalImage(null)} className="text-sm text-slate-500 hover:underline">スタイル選択に戻る</button>
-                  </div>
-                </div>
-                <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
-                  <img src={finalImage} className="w-full h-auto" alt="Final" />
-                </div>
-              </div>
+              )
+            })}
+          </div>
 
-              {/* Refine & Download */}
-              <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-                <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200">
-                  <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Edit3 className="w-4 h-4" /> 修正・微調整</h4>
-                  <div className="flex gap-2">
-                    <input
-                      className="flex-1 border border-slate-200 rounded-lg p-2 text-sm"
-                      placeholder="例：もっと明るく、文字を大きく..."
-                      value={refineInst}
-                      onChange={(e) => setRefineInst(e.target.value)}
-                    />
-                    <button
-                      onClick={() => generateFinal(true)}
-                      disabled={loading}
-                      className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold"
-                    >
-                      実行
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200 flex flex-col justify-center items-center">
-                  <a
-                    href={finalImage}
-                    download="blueprint_output.png"
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-center hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Download className="w-5 h-5" /> 画像をダウンロード
-                  </a>
-                </div>
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => generateFinal(false)}
+              disabled={loading}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-10 py-3 rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+            >
+              {loading ? '清書中...' : '💫 完成画像を生成する'}
+            </button>
+          </div>
+        </>
+      ) : (
+        // RESULT VIEW
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl p-2 md:p-4 border border-slate-200 shadow-lg max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-4 px-2">
+              <h3 className="font-bold text-slate-700">🎉 Completed</h3>
+              <div className="flex gap-2">
+                <button onClick={() => setFinalImage(null)} className="text-sm text-slate-500 hover:underline">スタイル選択に戻る</button>
               </div>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+              <img src={finalImage} className="w-full h-auto" alt="Final" />
+            </div>
+          </div>
 
-              <div className="text-center pt-8">
-                <button onClick={() => window.location.reload()} className="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-2 mx-auto">
-                  <RotateCcw className="w-4 h-4" /> 最初から作り直す
+          {/* Refine & Download */}
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
+            <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200">
+              <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Edit3 className="w-4 h-4" /> 修正・微調整</h4>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 border border-slate-200 rounded-lg p-2 text-sm"
+                  placeholder="例：もっと明るく、文字を大きく..."
+                  value={refineInst}
+                  onChange={(e) => setRefineInst(e.target.value)}
+                />
+                <button
+                  onClick={() => generateFinal(true)}
+                  disabled={loading}
+                  className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold"
+                >
+                  実行
                 </button>
               </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Global Loading Overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-white/80 z-[100] flex flex-col items-center justify-center backdrop-blur-sm">
-          <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-700 font-bold animate-pulse">{loadingMessage}</p>
+            <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200 flex flex-col justify-center items-center">
+              <a
+                href={finalImage}
+                download="blueprint_output.png"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-center hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Download className="w-5 h-5" /> 画像をダウンロード
+              </a>
+            </div>
+          </div>
+
+          <div className="text-center pt-8">
+            <button onClick={() => window.location.reload()} className="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-2 mx-auto">
+              <RotateCcw className="w-4 h-4" /> 最初から作り直す
+            </button>
+          </div>
         </div>
       )}
-    </main>
+    </div>
+  )
+}
+
+{/* Global Loading Overlay */ }
+{
+  loading && (
+    <div className="fixed inset-0 bg-white/80 z-[100] flex flex-col items-center justify-center backdrop-blur-sm">
+      <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+      <p className="text-slate-700 font-bold animate-pulse">{loadingMessage}</p>
+    </div>
+  )
+}
+    </main >
   );
 }
