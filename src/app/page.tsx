@@ -457,13 +457,14 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
     <main className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 pb-20">
 
       {/* Header */}
+      {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg shadow-blue-500/30 shadow-lg">
-              B
+            <div className="flex items-center justify-center">
+              <Image src="/logo.png" alt="Blueprint Engine Logo" width={200} height={50} className="h-10 w-auto object-contain" />
             </div>
-            <h1 className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            <h1 className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent animate-text-shimmer">
               ブループリントエンジン24
             </h1>
           </div>
