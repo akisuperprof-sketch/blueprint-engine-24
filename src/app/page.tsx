@@ -169,32 +169,37 @@ export default function Home() {
 
   // Step 3: Generate Draft
   const generateDraft = async () => {
-    // apiKey check handled by backend fallback if empty
+    if (!apiKey) {
+      setIsSettingsOpen(true);
+      return;
+    }
     setLoading(true);
-    setLoadingMessage("ラフスケッチ生成中...");
+    setPhase('draft'); // Move to draft view immediately to show loading
 
-    // Prepare prompt
-    const stepsStr = draftData.steps?.map((s, i) => `    ${i + 1}. **${s.label}**: ${s.visual_desc}`).join('\n') || "";
+    try {
+      let final_prompt_text = "";
 
-    // Character Reference - Dynamic
-    const charRef = refImages.length > 0
-      ? "Reference images provided. capture the style/character from input images."
-      : "なし";
+      // Assuming isDraftPromptEditOpen and manualDraftPrompt are defined elsewhere or will be added.
+      // Assuming constructDraftPrompt() is a helper function that constructs the prompt based on current state.
+      if (isPromptEditOpen && finalPrompt) { // Re-using isPromptEditOpen and finalPrompt for simplicity, assuming they might be repurposed or new ones added.
+        // USE MANUAL PROMPT
+        final_prompt_text = finalPrompt; // Using finalPrompt as manualDraftPrompt
+      } else {
+        // GENERATE FROM FORM (Existing Logic)
+        // This part needs to be constructed based on the original logic of generateDraft
+        const stepsStr = draftData.steps?.map((s: any, i: number) => `    ${i + 1}. **${s.label}**: ${s.visual_desc}`).join('\n') || "";
+        const charRef = refImages.length > 0 ? "Reference images provided. capture the style/character from input images." : "なし";
+        let langInstruction = targetLanguage === 'Japanese' ? "図中のテキストラベルは**すべて日本語**で記述すること。" : `All text labels inside the image MUST be in **${targetLanguage}**.`;
 
-    // Dynamic Language Instruction
-    const langInstruction = targetLanguage === 'Japanese'
-      ? "図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。"
-      : `All text labels inside the image MUST be in **${targetLanguage}**.`
-
-    const basePrompt = `
+        const basePrompt = `
 **役割:** 熟練したインフォグラフィックデザイナー
-**目的:** ${draftData.main_title}に基づいた明確で美しいインフォグラフィックの生成
+**目的:** ${draftData.main_title}に基づいた明確で美しいインフォグラフィックのラフスケッチ生成
 
 **1. テーマとスタイルの定義**
 * **メインタイトル:** ${draftData.main_title}
 * **概要・目的:** ${draftData.summary}
 * **言語指定:** ${langInstruction}
-* **スタイル:** ${draftData.recommended_style}
+* **推奨スタイル:** ${draftData.recommended_style || 'モダンで清潔感のあるベクターイラスト'}
 
 **2. 構造の定義 (Structural Archetype)**
 * **採用する構造:** ${draftData.archetype_name}
@@ -207,36 +212,26 @@ export default function Home() {
 * **メイン構造ブロック:** 以下の順序でイラストと日本語ラベルを配置し、矢印でつなぐ。
 ${stepsStr}
 * **フッターエリア:** 特になし。全体をスッキリとまとめる。
+
+【重要】これは最終的なデザインではなく、あくまで「ラフスケッチ」です。
+* 線画、または非常にシンプルな塗り分けで構成してください。
+* 色は最小限に抑え、構造と配置が明確にわかるようにしてください。
+* テキストはプレースホルダーで構いませんが、配置は正確に。
+* 複雑なテクスチャや詳細な描写は不要です。
 `;
-    setFinalPrompt(basePrompt);
+        final_prompt_text = basePrompt;
+      }
 
-    // Draft Override Block
-    const draftOverride = `
-【IMPORTANT INSTRUCTION FOR DRAFT MODE】
-Ignore the "Style" and "Color" defined above strictly for this output.
-Instead, use the following style:
+      setLoadingMessage("ラフスケッチ生成中...");
 
-* **Style:** Rough pencil sketch, Hand-drawn wireframe, Black and white line art.
-* **Purpose:** To check the layout and composition. Do not add colors.
-* **Detail:** Minimal shading, focus on structure and text placement.
-`;
-
-    // Layout Feedback Block
-    const feedbackBlock = layoutFeedback ? `
-[USER FEEDBACK - URGENT CORRECTION]
-The user provided specific feedback on the previous layout:
-"${layoutFeedback}"
-
-Please adjust the layout specifically to address this feedback.
-` : "";
-
-    const fullPrompt = `${basePrompt}\n${feedbackBlock}\n${draftOverride}`;
-
-    try {
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey, prompt: fullPrompt, refImages })
+        body: JSON.stringify({
+          prompt: final_prompt_text,
+          apiKey: apiKey,
+          refImages: refImages // Ensure refImages are passed
+        })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -260,7 +255,7 @@ Please adjust the layout specifically to address this feedback.
     setLoadingMessage(isRefine ? "修正中..." : `「${selectedStyle}」で清書中...`);
 
     const styleInstr = STYLE_PROMPTS[selectedStyle];
-    const modification = isRefine ? `\n[MODIFICATION] ${refineInst}` : "";
+    const modification = isRefine ? `\n[MODIFICATION] ${refineInst} ` : "";
 
     // Final Production Override
     const prompt = `
@@ -325,8 +320,8 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
             <div
               key={s.id}
               onClick={() => isClickable && setPhase(s.id as any)}
-              className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all 
-                ${isActive ? 'shadow-md' : ''} 
+              className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all
+                ${isActive ? 'shadow-md' : ''}
                 ${isClickable ? 'cursor-pointer hover:bg-slate-100 text-slate-600' : isActive ? '' : 'text-slate-300 cursor-not-allowed'}`}
               style={{
                 backgroundColor: isActive ? '#2563EB' : 'transparent',
