@@ -623,18 +623,24 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               {isDetailsOpen && (
                 <div className="mt-3 p-4 bg-white rounded-lg border border-slate-100 text-slate-600 space-y-4 text-sm leading-relaxed animate-in fade-in zoom-in-95 duration-200">
                   <p>
-                    <span className="font-bold text-slate-800">Blueprint Engine</span> は、ビジネス文脈で求められる高度な「構造化」「図解化」「体系設計」を自動で行う生成ツールです。
-                    入力された文章・情報・メモから、最適な形式のブループリント（設計図）を瞬時に生成します。
+                    <span className="font-bold text-slate-800">Blueprint Engine</span> は、ビジネス文脈で求められる「構造化・図解・体系化」を自動で行う生成ツールです。
+                    入力されたメモや資料から、最適な設計図を瞬時に生成します。
                   </p>
+
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 my-3">
+                    <p className="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">主な活用事例</p>
+                    <ul className="grid sm:grid-cols-2 gap-2 text-xs">
+                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div> <strong>新規事業スキーム:</strong> ビジネスモデルの可視化</li>
+                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div> <strong>業務フロー:</strong> マニュアルや工程の整理</li>
+                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div> <strong>学習ロードマップ:</strong> 成長ステップの体系化</li>
+                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div> <strong>組織図・相関図:</strong> 関係性の明確化</li>
+                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-400 rounded-full"></div> <strong>KPIツリー:</strong> 目標達成要因の構造分解</li>
+                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> <strong>概念実証 (PoC):</strong> アイデアの具体化</li>
+                    </ul>
+                  </div>
+
                   <p>
-                    階層構造図、KPIツリー、業務フロー、戦略マップ、要因分解、スキーム図など、多様なビジネスフレームに対応。
-                  </p>
-                  <p>
-                    シンプルな指示だけで、<br />
-                    ・論理が一貫した構造<br />
-                    ・美しいインフォグラフィック<br />
-                    ・そのまま顧客提案に使える完成度<br />
-                    が整います。
+                    シンプルな指示だけで、「論理が一貫した美しいインフォグラフィック」が整い、そのまま提案資料や共有ドキュメントとして活用できます。
                   </p>
                   <p>
                     「説明が伝わらない」「考えを整理する時間がない」「資料作成に時間が取られる」
