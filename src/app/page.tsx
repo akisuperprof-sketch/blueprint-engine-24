@@ -246,10 +246,24 @@ ${stepsStr}
     }
   };
 
+  // --- Error Handler ---
+  const handleError = (error: any) => {
+    console.error(error);
+    setLoading(false);
+
+    const msg = error.message || error.toString();
+    if (msg.includes('quota') || msg.includes('429')) {
+      alert("⚠️ API利用制限(Quota)に達しました。\n\nしばらく時間を置いてから再度お試しいただくか、別のAPIキーを設定してください。\n(特に夕方〜夜間は混み合う場合があります)");
+    } else {
+      alert(`エラーが発生しました: ${msg}`);
+    }
+  };
+
   // Step 2: Update Structure (Retake)
   const updateStructure = async () => {
     // apiKey check handled by backend fallback if empty
     setLoading(true);
+    setLoadingMessage("AIが構成を修正中...");
     try {
       const prompt = `
             現在の構成データに対して、ユーザーの修正指示を反映した新しいJSONを作成してください。
@@ -276,7 +290,7 @@ ${stepsStr}
       let jsonStr = data.text.replace(/```json/g, '').replace(/```/g, '').trim();
       setDraftData(JSON.parse(jsonStr));
       setRetakeInstr('');
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { handleError(e); }
     finally { setLoading(false); }
   };
 
@@ -321,7 +335,7 @@ ${stepsStr}
         alert("モデルが画像を返しませんでした。テキスト: " + data.content.substring(0, 50) + "...");
       }
       setPhase('draft');
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { handleError(e); }
     finally { setLoading(false); }
   };
 
@@ -329,7 +343,7 @@ ${stepsStr}
   const generateFinal = async (isRefine = false) => {
     // Allow empty key - backend will check env var
     setLoading(true);
-    setLoadingMessage(isRefine ? "微調整中..." : "清書中... (高品質生成)");
+    setLoadingMessage(isRefine ? "微調整中..." : "最終工程で清書中です... (高品質生成)");
 
     try {
       let promptToUse = "";
@@ -410,7 +424,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
       setPhase('design');
 
     } catch (e: any) {
-      alert(e.message);
+      handleError(e);
     } finally {
       setLoading(false);
     }
@@ -418,6 +432,19 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
 
   // --- Render Logic ---
+  const LoadingOverlay = () => {
+    if (!loading) return null;
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center animate-in fade-in duration-300">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Processing...</h3>
+          <p className="text-slate-500 text-sm text-center">{loadingMessage || '処理中...'}</p>
+        </div>
+      </div>
+    );
+  };
+
   const ProgressBar = () => {
     const steps = [
       { id: 'input', label: '01. 入力' },
@@ -459,18 +486,19 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 pb-20">
+      <LoadingOverlay />
 
       {/* Header */}
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center">
+            <button onClick={() => setPhase('input')} className="flex items-center justify-center hover:opacity-80 transition-opacity">
               <Image src="/logo.png" alt="Blueprint Engine Logo" width={200} height={50} className="h-10 w-auto object-contain" />
-            </div>
-            <h1 className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent animate-text-shimmer">
+            </button>
+            <button onClick={() => setPhase('input')} className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent animate-text-shimmer hover:opacity-80 transition-opacity">
               ブループリントエンジン24
-            </h1>
+            </button>
           </div>
           <div className="flex gap-4">
             <button
