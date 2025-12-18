@@ -7,7 +7,8 @@ export const ARCHETYPES = [
     "タイムライン (時系列)",
     "サイクル図 (循環)",
     "マインドマップ (放射状)",
-    "ピラミッド階層 (構造)"
+    "ピラミッド階層 (構造)",
+    "マトリックス (4象限 / 2x2分析)"
 ];
 
 export const STYLE_PROMPTS: Record<string, string> = {
@@ -49,7 +50,11 @@ export const STYLE_PROMPTS: Record<string, string> = {
 
     "水彩画アート (Watercolor Art)": `Style: Watercolor Illustration.
     Features: Soft color bleeding, textured paper background, artistic brush strokes.
-    Vibe: Organic, artistic, gentle, hand-painted.`
+    Vibe: Organic, artistic, gentle, hand-painted.`,
+
+    "黒板アート (Blackboard Art)": `Style: Chalkboard Drawing.
+    Features: Detailed chalk textures, green or black chalkboard background, hand-drawn diagrams, multi-colored chalk.
+    Vibe: Educational, nostalgic, creative, handmade effect.`
 };
 
 
@@ -63,18 +68,20 @@ export const STYLE_ICONS: Record<string, { icon: string, color: string }> = {
     "コミック/漫画 (Comic/Manga)": { "icon": "💬", "color": "#FCE7F3" },
     "クレイアニメ (Clay Anime)": { "icon": "🧸", "color": "#FFEDD5" },
     "レトロゲーム (Retro Game)": { "icon": "🕹️", "color": "#DCFCE7" },
-    "水彩画アート (Watercolor Art)": { "icon": "🎨", "color": "#FEF9C3" }
+    "水彩画アート (Watercolor Art)": { "icon": "🎨", "color": "#FEF9C3" },
+    "黒板アート (Blackboard Art)": { "icon": "🏫", "color": "#D1FAE5" }
 };
 
 export const STYLE_PREVIEWS: Record<string, string> = {
-    "ビジネス・プロ (Business Pro)": "bg-gradient-to-br from-slate-100 to-blue-100 border border-blue-200",
-    "ポップ・インフォ (Pop Info)": "bg-gradient-to-br from-yellow-200 via-orange-200 to-red-200 border border-orange-300",
+    "ビジネス・プロ (Business Pro)": "bg-gradient-to-br from-slate-800 to-blue-900 border border-blue-400", // Navy for trust
+    "ポップ・インフォ (Pop Info)": "bg-gradient-to-br from-yellow-300 via-orange-400 to-red-500", // Vibrant
     "手書きスケッチ (Hand-drawn Sketch)": "bg-[#fffbeb] border-2 border-dashed border-slate-400",
     "ミニマリスト (Minimalist)": "bg-white border border-slate-200 shadow-sm",
     "3Dアイソメトリック (3D Isometric)": "bg-gradient-to-br from-indigo-100 to-purple-200 border-b-4 border-indigo-300",
-    "サイバーパンク (Cyberpunk)": "bg-slate-900 border border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
+    "サイバーパンク (Cyberpunk)": "bg-slate-950 border border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]", // Darker + more neon
     "コミック/漫画 (Comic/Manga)": "bg-white border-2 border-black bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:6px_6px]",
     "クレイアニメ (Clay Anime)": "bg-gradient-to-br from-orange-100 to-amber-200 rounded-xl border-4 border-white shadow-inner",
     "レトロゲーム (Retro Game)": "bg-slate-800 border-4 border-green-500",
-    "水彩画アート (Watercolor Art)": "bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 opacity-90"
+    "水彩画アート (Watercolor Art)": "bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 opacity-90",
+    "黒板アート (Blackboard Art)": "bg-emerald-900 border-4 border-amber-900 [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:20px_20px]"
 };

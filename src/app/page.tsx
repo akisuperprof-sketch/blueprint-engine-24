@@ -42,6 +42,7 @@ export default function Home() {
   const [additionalInst, setAdditionalInst] = useState('');
   const [refImages, setRefImages] = useState<{ data: string, mimeType: string }[]>([]);
   const [isRefMandatory, setIsRefMandatory] = useState(false);
+  const [refImageRole, setRefImageRole] = useState<'general' | 'narrator'>('general');
   const [targetLanguage, setTargetLanguage] = useState('Japanese');
 
   // Struct Phase
@@ -170,7 +171,11 @@ export default function Home() {
   const constructDraftPrompt = () => {
     const stepsStr = draftData.steps?.map((s: any, i: number) => `    ${i + 1}. **${s.label}**: ${s.visual_desc}`).join('\n') || "";
 
-    const charRef = refImages.length > 0 ? "Reference images provided. capture the style/character from input images." : "なし";
+    const charRef = refImages.length > 0
+      ? (refImageRole === 'narrator'
+        ? "Please use the character from the reference image as a 'narrator/commentator' who explains the content (placed at the side with a speech bubble)."
+        : "Capture the visual style/elements from the input reference images and incorporate them into the main diagram.")
+      : "なし";
 
     let langInstruction = targetLanguage === 'Japanese'
       ? "図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。"
@@ -396,9 +401,13 @@ original_prompt: ${finalPrompt}
           // Use draftData if available, else fallback
           const mainTitle = draftData.main_title || "Untitled";
 
-          let langInstruction = targetLanguage === 'Japanese'
+          const langInstruction = targetLanguage === 'Japanese'
             ? "Ensure all text labels properly rendered in valid Japanese characters."
             : `Ensure all text labels are in **${targetLanguage}**.`;
+
+          const charInstruction = refImageRole === 'narrator'
+            ? "Important: Place the person/character from the reference image as a 'narrator' (e.g., at the corner, pointing to the key info)."
+            : "Incorporate the style of the provided reference image into the final rendering.";
 
           promptToUse = `
 **Role:** Expert Infographic Illustrator
@@ -411,6 +420,7 @@ ${styleP}
 * **Title:** ${mainTitle}
 * **Language:** ${langInstruction}
 * **Structure:** Follow the 'Content Mapping' strictly.
+* **Character Role:** ${charInstruction}
 
 **Technical Constraints:**
 * Aspect Ratio: 3:4 (Vertical) or 16:9 (if requested) - Optimized for SNS.
@@ -605,7 +615,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               type="password"
               placeholder="AIzaSy..."
               value={apiKey}
-              onChange={(e) => saveApiKey(e.target.value)}
+              onChange={(e) => setApiKey(e.target.value)}
               className="w-full border border-slate-300 rounded-lg p-3 mb-6 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
             />
             <button
@@ -684,7 +694,12 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
           <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-blue-100 shadow-sm">
             <h2 className="text-xl font-bold mb-2 text-slate-800">01. 図解したい内容を入力</h2>
-            <p className="text-sm text-slate-500 mb-4">テキスト、メモ、アイデアを入力してください。AIが最適な構造に変換します。</p>
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 text-xs text-blue-800 flex items-start gap-2">
+              <span className="text-base">💡</span>
+              <div>
+                <strong>入力のコツ:</strong> 比較なら「強み・弱み」、手順なら「Step1, 2...」を意識して書くとAIが構造を捉えやすくなります。
+              </div>
+            </div>
             <textarea
               className="w-full h-48 p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/90 resize-none font-medium"
               placeholder="例：マーケティング戦略の比較、コーヒーの淹れ方手順..."
@@ -698,15 +713,34 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               <h3 className="flex items-center gap-2 font-bold text-slate-700 mb-4">
                 <ImageIcon className="w-5 h-5 text-blue-500" /> 参考画像・キャラクター (任意)
               </h3>
-              <div className="flex items-center gap-4 mb-4">
-                <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                  <Upload className="w-4 h-4" /> アップロード
-                  <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input type="checkbox" checked={isRefMandatory} onChange={(e) => setIsRefMandatory(e.target.checked)} className="rounded text-blue-600" />
-                  画像要素を必須にする
-                </label>
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <Upload className="w-4 h-4" /> アップロード
+                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input type="checkbox" checked={isRefMandatory} onChange={(e) => setIsRefMandatory(e.target.checked)} className="rounded text-blue-600" />
+                    画像要素を必須にする
+                  </label>
+                </div>
+
+                {refImages.length > 0 && (
+                  <div className="flex bg-slate-50 p-1.5 rounded-lg border border-slate-200 w-fit">
+                    <button
+                      onClick={() => setRefImageRole('general')}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${refImageRole === 'general' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      メインとして利用
+                    </button>
+                    <button
+                      onClick={() => setRefImageRole('narrator')}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${refImageRole === 'narrator' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      解説者として配置
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {refImages.map((img, i) => (
@@ -1055,19 +1089,21 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                   )}
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-4 flex gap-3">
                   <button
                     onClick={() => generateFinal(false)}
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2"
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2"
                   >
-                    {loading ? '生成中...' : <>デザイン清書を実行 <Download className="w-5 h-5" /></>}
+                    {loading ? '生成中...' : <>{selectedStyle.split('(')[0]}スタンスで清書 <Download className="w-5 h-5" /></>}
                   </button>
-                  <div className="text-center mt-3">
-                    <button onClick={() => setPhase('struct')} className="text-slate-400 text-sm hover:text-slate-600">
-                      ← 構成に戻る
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setPhase('struct')}
+                    className="px-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl transition-all"
+                    title="構成に戻る"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -1120,7 +1156,15 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                   <div className="flex justify-between items-center mb-4 px-2">
                     <h3 className="font-bold text-slate-700">🎉 Completed</h3>
                     <div className="flex gap-2">
-                      <button onClick={() => setFinalImage(null)} className="text-sm text-slate-500 hover:underline">スタイル選択に戻る</button>
+                      <button
+                        onClick={() => {
+                          setFinalImage(null);
+                          setPhase('draft');
+                        }}
+                        className="flex items-center gap-1.5 text-sm bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 transition-colors"
+                      >
+                        <RotateCcw className="w-4 h-4" /> スタイル変更
+                      </button>
                     </div>
                   </div>
                   <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
