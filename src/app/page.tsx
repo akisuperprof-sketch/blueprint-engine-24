@@ -896,7 +896,8 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                           </div>
                           {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
                         </div>
-                      ))}
+                      );
+                    })}
                   </div>
                 </div>
 
