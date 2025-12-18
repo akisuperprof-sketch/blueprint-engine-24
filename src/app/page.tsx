@@ -650,7 +650,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
             </div>
 
             {/* Advanced Draft Prompt Editor */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-8">
+            <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200 mt-8 shadow-md">
               <button
                 onClick={handleDraftPromptEditToggle}
                 className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm hover:text-blue-600 transition-colors"
@@ -767,7 +767,7 @@ ${isRefMandatory ? "CRITICAL: The character/object from the reference images MUS
                 </div>
 
                 {/* Advanced Prompt Editor */}
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="bg-blue-50 p-4 rounded-2xl border-2 border-blue-200 mt-4 shadow-md">
                   <button
                     onClick={() => setIsPromptEditOpen(!isPromptEditOpen)}
                     className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm"
