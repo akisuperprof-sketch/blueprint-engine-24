@@ -187,7 +187,10 @@ ${stepsStr}
   // Step 1: Generate Structure
   const generateStructure = async () => {
     // Allow empty key - backend will check env var
-    if (!apiKey && inputText.length < 5) { setIsSettingsOpen(true); return; }
+    if (inputText.length < 5) {
+      alert("テキストを5文字以上入力してください。");
+      return;
+    }
 
     setLoading(true);
     setLoadingMessage("解析中... (構造化)");
