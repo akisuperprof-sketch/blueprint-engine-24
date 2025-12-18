@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Clock, Check, ChevronRight, RotateCcw, Download, Upload, Image as ImageIcon, Copy, Search, Edit3 } from 'lucide-react';
-import { ARCHETYPES, STYLE_PROMPTS, STYLE_ICONS } from '@/lib/constants';
+import { ARCHETYPES, STYLE_PROMPTS, STYLE_ICONS, STYLE_PREVIEWS } from '@/lib/constants';
 import Image from 'next/image';
 
 // Types
@@ -945,27 +945,38 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                   <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <ImageIcon className="w-5 h-5 text-blue-500" /> デザインスタイルの選択
                   </h3>
-                  <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2">
+                  <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto p-1">
                     {Object.keys(STYLE_PROMPTS).map((styleName) => {
                       const meta = STYLE_ICONS[styleName] || { icon: '🎨', color: '#f0f0f0' };
+                      const previewClass = STYLE_PREVIEWS[styleName] || "bg-slate-100";
+                      const isSelected = selectedStyle === styleName;
+
                       return (
                         <div
                           key={styleName}
                           onClick={() => setSelectedStyle(styleName)}
-                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedStyle === styleName
-                            ? 'border-blue-500 bg-blue-50/50'
-                            : 'border-slate-100 hover:border-blue-200'
-                            }`}
+                          className={`relative group cursor-pointer transition-all duration-200 rounded-xl overflow-hidden border-2 flex flex-col
+                            ${isSelected ? 'border-blue-600 shadow-md scale-[1.02]' : 'border-transparent hover:border-blue-200 hover:shadow-sm'}
+                          `}
                         >
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: meta.color }}>
-                            {meta.icon}
-                          </div>
-                          <div>
-                            <div className={`font-bold text-sm ${selectedStyle === styleName ? 'text-blue-700' : 'text-slate-700'}`}>
-                              {styleName}
+                          {/* Visual Preview Area */}
+                          <div className={`h-20 w-full flex items-center justify-center ${previewClass} transition-opacity ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`}>
+                            <div className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm text-2xl">
+                              {meta.icon}
                             </div>
                           </div>
-                          {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
+
+                          {/* Label Area */}
+                          <div className={`p-2 text-xs font-bold text-center truncate w-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600'}`}>
+                            {styleName.split('(')[0]}
+                          </div>
+
+                          {/* Check Indicator */}
+                          {isSelected && (
+                            <div className="absolute top-1 right-1 bg-blue-600 text-white rounded-full p-0.5 shadow-sm">
+                              <Check className="w-3 h-3" />
+                            </div>
+                          )}
                         </div>
                       );
                     })}

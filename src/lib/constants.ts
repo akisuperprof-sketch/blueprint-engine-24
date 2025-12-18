@@ -52,6 +52,7 @@ export const STYLE_PROMPTS: Record<string, string> = {
     Vibe: Organic, artistic, gentle, hand-painted.`
 };
 
+
 export const STYLE_ICONS: Record<string, { icon: string, color: string }> = {
     "ビジネス・プロ (Business Pro)": { "icon": "💼", "color": "#E0F2FE" },
     "ポップ・インフォ (Pop Info)": { "icon": "🔷", "color": "#F3F4F6" },
@@ -63,4 +64,17 @@ export const STYLE_ICONS: Record<string, { icon: string, color: string }> = {
     "クレイアニメ (Clay Anime)": { "icon": "🧸", "color": "#FFEDD5" },
     "レトロゲーム (Retro Game)": { "icon": "🕹️", "color": "#DCFCE7" },
     "水彩画アート (Watercolor Art)": { "icon": "🎨", "color": "#FEF9C3" }
+};
+
+export const STYLE_PREVIEWS: Record<string, string> = {
+    "ビジネス・プロ (Business Pro)": "bg-gradient-to-br from-slate-100 to-blue-100 border border-blue-200",
+    "ポップ・インフォ (Pop Info)": "bg-gradient-to-br from-yellow-200 via-orange-200 to-red-200 border border-orange-300",
+    "手書きスケッチ (Hand-drawn Sketch)": "bg-[#fffbeb] border-2 border-dashed border-slate-400",
+    "ミニマリスト (Minimalist)": "bg-white border border-slate-200 shadow-sm",
+    "3Dアイソメトリック (3D Isometric)": "bg-gradient-to-br from-indigo-100 to-purple-200 border-b-4 border-indigo-300",
+    "サイバーパンク (Cyberpunk)": "bg-slate-900 border border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
+    "コミック/漫画 (Comic/Manga)": "bg-white border-2 border-black bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:6px_6px]",
+    "クレイアニメ (Clay Anime)": "bg-gradient-to-br from-orange-100 to-amber-200 rounded-xl border-4 border-white shadow-inner",
+    "レトロゲーム (Retro Game)": "bg-slate-800 border-4 border-green-500",
+    "水彩画アート (Watercolor Art)": "bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 opacity-90"
 };
