@@ -470,17 +470,17 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
           <div className="flex gap-4">
             <button
               onClick={() => setIsHistoryOpen(true)}
-              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
               title="履歴"
             >
-              <Clock className="w-5 h-5" />
+              <Clock className="w-6 h-6" />
             </button>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+              className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
               title="設定"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -875,26 +875,28 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                     <ImageIcon className="w-5 h-5 text-blue-500" /> デザインスタイルの選択
                   </h3>
                   <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                    {Object.keys(STYLE_PROMPTS).map((styleName) => (
-                      <div
-                        key={styleName}
-                        onClick={() => setSelectedStyle(styleName)}
-                        className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedStyle === styleName
-                          ? 'border-blue-500 bg-blue-50/50'
-                          : 'border-slate-100 hover:border-blue-200'
-                          }`}
-                      >
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: meta.color }}>
-                          {meta.icon}
-                        </div>
-                        <div>
-                          <div className={`font-bold text-sm ${selectedStyle === styleName ? 'text-blue-700' : 'text-slate-700'}`}>
-                            {styleName}
+                    {Object.keys(STYLE_PROMPTS).map((styleName) => {
+                      const meta = STYLE_ICONS[styleName] || { icon: '🎨', color: '#f0f0f0' };
+                      return (
+                        <div
+                          key={styleName}
+                          onClick={() => setSelectedStyle(styleName)}
+                          className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedStyle === styleName
+                            ? 'border-blue-500 bg-blue-50/50'
+                            : 'border-slate-100 hover:border-blue-200'
+                            }`}
+                        >
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: meta.color }}>
+                            {meta.icon}
                           </div>
+                          <div>
+                            <div className={`font-bold text-sm ${selectedStyle === styleName ? 'text-blue-700' : 'text-slate-700'}`}>
+                              {styleName}
+                            </div>
+                          </div>
+                          {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
                         </div>
-                        {selectedStyle === styleName && <Check className="w-5 h-5 text-blue-500 ml-auto" />}
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
 
