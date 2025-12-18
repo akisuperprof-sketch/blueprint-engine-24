@@ -58,7 +58,11 @@ export default function Home() {
 
   // Step 2 Extended (Draft Prompt Edit)
   const [isDraftPromptEditOpen, setDraftPromptEditOpen] = useState(false);
+  const [useManualDraftPrompt, setUseManualDraftPrompt] = useState(false);
   const [manualDraftPrompt, setManualDraftPrompt] = useState('');
+
+  // Step 3 Extended (Final Prompt Edit)
+  const [useManualFinalPrompt, setUseManualFinalPrompt] = useState(false);
 
   // Loading States
   const [loading, setLoading] = useState(false);
@@ -285,7 +289,7 @@ ${stepsStr}
     try {
       let final_prompt_text = "";
 
-      if (isDraftPromptEditOpen && manualDraftPrompt) {
+      if (useManualDraftPrompt && manualDraftPrompt) {
         // USE MANUAL PROMPT
         final_prompt_text = manualDraftPrompt;
       } else {
@@ -338,8 +342,8 @@ Keep the original composition but apply the correction.
 original_prompt: ${finalPrompt}
             `;
       } else {
-        // If manual prompt edit is OPEN, use that.
-        if (isPromptEditOpen && finalPrompt) {
+        // If manual prompt edit is ENABLED, use that.
+        if (useManualFinalPrompt && finalPrompt) {
           promptToUse = finalPrompt;
         } else {
           // Otherwise construct standard Final Prompt
@@ -796,16 +800,39 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
               {isDraftPromptEditOpen && (
                 <div className="mt-4 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-3 border border-yellow-100 flex gap-2 items-start">
-                    <span className="text-lg">⚠️</span>
-                    <div>
-                      <strong>注意:</strong> こちらを編集・有効化している間は、<strong>上のフォームの内容（タイトル変更など）は無視され</strong>、以下のプロンプトがそのまま使用されます。
-                    </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="useManualDraftPrompt"
+                      checked={useManualDraftPrompt}
+                      onChange={(e) => {
+                        setUseManualDraftPrompt(e.target.checked);
+                        if (e.target.checked && !manualDraftPrompt) {
+                          setManualDraftPrompt(constructDraftPrompt());
+                        }
+                      }}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="useManualDraftPrompt" className="text-sm font-bold text-slate-700 cursor-pointer">
+                      手動プロンプトを適用する (Override with manual prompt)
+                    </label>
                   </div>
+
+                  {useManualDraftPrompt && (
+                    <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-3 border border-yellow-100 flex gap-2 items-start">
+                      <span className="text-lg">⚠️</span>
+                      <div>
+                        <strong>注意:</strong> ここをチェックしている間は、<strong>上のフォームの内容（タイトル変更など）は無視され</strong>、以下のプロンプトがそのまま使用されます。
+                      </div>
+                    </div>
+                  )}
                   <textarea
                     value={manualDraftPrompt}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setManualDraftPrompt(e.target.value)}
-                    className="w-full h-64 p-3 text-xs font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
+                    disabled={!useManualDraftPrompt}
+                    placeholder={useManualDraftPrompt ? "プロンプトを編集してください..." : "チェックを入れると編集できます"}
+                    className={`w-full h-64 p-3 text-xs font-mono border rounded-lg outline-none leading-relaxed transition-colors
+                      ${useManualDraftPrompt ? 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
                   />
                 </div>
               )}
@@ -916,13 +943,28 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
                   {isPromptEditOpen && (
                     <div className="mt-3 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <input
+                          type="checkbox"
+                          id="useManualFinalPrompt"
+                          checked={useManualFinalPrompt}
+                          onChange={(e) => setUseManualFinalPrompt(e.target.checked)}
+                          className="rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor="useManualFinalPrompt" className="text-sm font-bold text-slate-700 cursor-pointer">
+                          手動プロンプトを適用する (Override with manual prompt)
+                        </label>
+                      </div>
+
                       <p className="text-xs text-slate-500 mb-2">
                         ※ここはAIへの最終的な指示文です。自動生成された内容を直接調整したい場合のみ編集してください。
                       </p>
                       <textarea
                         value={finalPrompt}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFinalPrompt(e.target.value)}
-                        className="w-full h-64 p-3 text-xs font-mono bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
+                        disabled={!useManualFinalPrompt}
+                        className={`w-full h-64 p-3 text-xs font-mono border rounded-lg outline-none leading-relaxed transition-colors
+                            ${useManualFinalPrompt ? 'bg-slate-50 border-slate-300 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
                       />
                     </div>
                   )}
