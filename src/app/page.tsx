@@ -279,10 +279,7 @@ ${stepsStr}
 
   // Step 3: Generate Draft
   const generateDraft = async () => {
-    if (!apiKey) {
-      setIsSettingsOpen(true);
-      return;
-    }
+    // Allow empty key - backend will check env var
     setLoading(true);
     setPhase('draft'); // Move to draft view immediately to show loading
 
@@ -327,7 +324,7 @@ ${stepsStr}
 
   // Step 4: Final Generation
   const generateFinal = async (isRefine = false) => {
-    if (!apiKey) { setIsSettingsOpen(true); return; }
+    // Allow empty key - backend will check env var
     setLoading(true);
     setLoadingMessage(isRefine ? "微調整中..." : "清書中... (高品質生成)");
 
