@@ -36,6 +36,8 @@ export async function POST(req: Request) {
                 console.warn(`Model ${modelName} failed:`, lastError);
                 // Continue to next model if it's a quota or availability issue
                 if (lastError.toLowerCase().includes('quota') || lastError.toLowerCase().includes('429') || lastError.toLowerCase().includes('exhausted')) {
+                    // Wait a bit before retry to avoid burst limit
+                    await new Promise(r => setTimeout(r, 2000));
                     continue;
                 } else {
                     break; // Critical error, stop

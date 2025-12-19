@@ -128,7 +128,7 @@ export default function Home() {
           const img = new (window as any).Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_DIM = 800; // Further reduce for token savings
+            const MAX_DIM = 512; // High-efficiency for reference images
             let width = img.width;
             let height = img.height;
 
@@ -149,7 +149,7 @@ export default function Home() {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1]; // Lower quality for reference images to save quota
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1]; // Lower quality for reference images to save quota
             setRefImages(prev => [...prev, { data: compressedBase64, mimeType: 'image/jpeg' }]);
           };
           img.src = event.target?.result;
@@ -436,15 +436,36 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         }
       }
 
+      const getDownscaledDraft = async (dataUrl: string): Promise<string> => {
+        return new Promise((resolve) => {
+          const img = new (window as any).Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX = 512;
+            let w = img.width;
+            let h = img.height;
+            if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+            else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d')?.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.5).split(',')[1]);
+          };
+          img.src = dataUrl;
+        });
+      };
+
+      const draftRefData = (draftImage && draftImage.includes('image/'))
+        ? await getDownscaledDraft(draftImage)
+        : null;
+
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          // Only send draftImage if it's a PNG/JPEG. SVG is better described by prompt to save token quota.
-          refImages: isRefine ? [] : (draftImage && (draftImage.includes('image/png') || draftImage.includes('image/jpeg'))
-            ? [{ data: draftImage.split(',')[1], mimeType: draftImage.includes('image/png') ? "image/png" : "image/jpeg" }]
+          refImages: isRefine ? [] : (draftRefData
+            ? [{ data: draftRefData, mimeType: "image/jpeg" }]
             : [])
         })
       });
