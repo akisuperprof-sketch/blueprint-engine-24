@@ -440,9 +440,9 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          refImages: isRefine ? [] : (draftImage ? [{ data: draftImage.split(',')[1], mimeType: "image/png" }] : []) // Use draft as ref for final if possible, or just raw prompt
-          // Note: For pure Gemini 1.5 Pro image gen, structure adherence from image input is tricky.
-          // Better strategy: Just use the strong prompt + style. We pass draftImage just in case model supports it.
+          refImages: isRefine ? [] : (draftImage && draftImage.startsWith('data:image/png')
+            ? [{ data: draftImage.split(',')[1], mimeType: "image/png" }]
+            : [])
         })
       });
 
@@ -453,8 +453,11 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
       if (data.type === 'image') {
         resultUrl = `data:${data.mimeType};base64,${data.data}`;
         setFinalImage(resultUrl);
+      } else if (data.type === 'svg') {
+        resultUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(data.content)))}`;
+        setFinalImage(resultUrl);
       } else {
-        alert("Error format");
+        throw new Error("画風の生成に失敗しました。別のスタイルを試してください。");
       }
 
       // Auto Save to History
@@ -1101,20 +1104,19 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                   )}
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-4 flex flex-col gap-3">
                   <button
                     onClick={() => generateFinal(false)}
                     disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-bold shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all text-lg flex justify-center items-center gap-2 disabled:opacity-50"
                   >
-                    {loading ? '生成中...' : <>{selectedStyle.split('(')[0]}スタンスで清書 <Download className="w-5 h-5" /></>}
+                    {loading ? '生成中...' : <>{selectedStyle.split('(')[0]}スタイルで清書 <Download className="w-5 h-5" /></>}
                   </button>
                   <button
                     onClick={() => setPhase('struct')}
-                    className="px-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl transition-all"
-                    title="構成に戻る"
+                    className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                   >
-                    <RotateCcw className="w-5 h-5" />
+                    <RotateCcw className="w-4 h-4" /> 構成の確認に戻る
                   </button>
                 </div>
               </div>
