@@ -5,6 +5,7 @@ export async function POST(req: Request) {
     try {
         const { apiKey, prompt, refImages } = await req.json();
 
+        // Check if the individual API key is present, otherwise fallback
         const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
 
         if (!finalApiKey) {
@@ -13,9 +14,10 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Helper: Attempt generation with optimized fallback chain
-        // We prioritize nano-banana-pro-preview as requested, then fallback to stable models
-        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
+        // Models to try in order. 
+        // We prioritize nano-banana-pro-preview as requested.
+        // We use gemini-1.5-flash as the ultimate fallback because it has the highest TPM limit.
+        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
 
         let lastError = "";
         let result = null;
@@ -23,30 +25,49 @@ export async function POST(req: Request) {
         for (const modelName of modelsToTry) {
             try {
                 const model = genAI.getGenerativeModel({ model: modelName });
+
+                // Construct content: Text first, then images
                 let content: any[] = [prompt];
+
                 if (refImages && Array.isArray(refImages)) {
                     refImages.forEach((img: any) => {
-                        content.push({ inlineData: { data: img.data, mimeType: img.mimeType } });
+                        if (img.data && img.mimeType) {
+                            content.push({
+                                inlineData: {
+                                    data: img.data,
+                                    mimeType: img.mimeType
+                                }
+                            });
+                        }
                     });
                 }
-                result = await model.generateContent(content);
-                if (result) break; // Success!
+
+                // Set a timeout for the individual model call (to avoid mobile hangs)
+                const generatePromise = model.generateContent(content);
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 25000));
+
+                result = await Promise.race([generatePromise, timeoutPromise]) as any;
+                if (result) break;
             } catch (e: any) {
                 lastError = e.message;
-                console.warn(`Model ${modelName} failed:`, lastError);
-                // Continue to next model if it's a quota or availability issue
-                if (lastError.toLowerCase().includes('quota') || lastError.toLowerCase().includes('429') || lastError.toLowerCase().includes('exhausted')) {
-                    // Wait a bit before retry to avoid burst limit
+                console.warn(`Model ${modelName} failed on server:`, lastError);
+
+                // If it's a Quota error, wait a moment and try the next one
+                if (lastError.toLowerCase().includes('quota') || lastError.toLowerCase().includes('429')) {
                     await new Promise(r => setTimeout(r, 2000));
                     continue;
                 } else {
-                    break; // Critical error, stop
+                    // For other errors, we still try next model unless it's a fatal key issue
+                    if (lastError.includes("API key")) break;
+                    continue;
                 }
             }
         }
 
         if (!result) {
-            return NextResponse.json({ error: `全てのモデルで制限またはエラーが発生しました: ${lastError}` }, { status: 500 });
+            return NextResponse.json({
+                error: `画像生成に失敗しました。\n[原因]: ${lastError}\n[対策]: しばらく待つか、スタイルを変えてみてください。`
+            }, { status: 500 });
         }
 
         const response = await result.response;

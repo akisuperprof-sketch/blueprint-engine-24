@@ -418,45 +418,18 @@ original_prompt: ${finalPrompt}
 **Visual Style:** ${selectedStyle.split('(')[0]}
 ${styleP}
 
-**Content Requirements:**
+**Content:**
 * **Title:** ${mainTitle}
-* **Language:** ${langInstruction}
 * **Structure:** Follow the 'Content Mapping' strictly.
 * **Character Role:** ${charInstruction}
 
-**Technical Constraints:**
-* Aspect Ratio: 3:4 (Vertical) or 16:9 (if requested) - Optimized for SNS.
-* Text: Must be legible, distinct from background.
-* Output: High Fidelity, rich colors, professional finish.
-
-${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
+Ensure all text is in **${targetLanguage}**.
+Deliver a professional, production-ready graphical representation.
 `;
           // Also update the finalPrompt state so user sees it in "Advanced" if they open it
           setFinalPrompt(promptToUse);
         }
       }
-
-      const getDownscaledDraft = async (dataUrl: string): Promise<string> => {
-        return new Promise((resolve) => {
-          const img = new (window as any).Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX = 512;
-            let w = img.width;
-            let h = img.height;
-            if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
-            else { if (h > MAX) { w *= MAX / h; h = MAX; } }
-            canvas.width = w; canvas.height = h;
-            canvas.getContext('2d')?.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.5).split(',')[1]);
-          };
-          img.src = dataUrl;
-        });
-      };
-
-      const draftRefData = (draftImage && draftImage.includes('image/'))
-        ? await getDownscaledDraft(draftImage)
-        : null;
 
       const res = await fetch('/api/generate-image', {
         method: 'POST',
@@ -464,9 +437,10 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          refImages: isRefine ? [] : (draftRefData
-            ? [{ data: draftRefData, mimeType: "image/jpeg" }]
-            : [])
+          // CRITICAL: We stop sending the visual draft image to the API during the final step.
+          // This drastically reduces TPM (token) consumption on mobile, which is causing quota errors.
+          // The detailed promptToUse contains all the logic needed for a perfect render.
+          refImages: []
         })
       });
 
