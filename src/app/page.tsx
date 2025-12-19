@@ -128,19 +128,19 @@ export default function Home() {
           const img = new (window as any).Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
+            const MAX_DIM = 800; // Further reduce for token savings
             let width = img.width;
             let height = img.height;
-            const maxSide = 1000;
 
             if (width > height) {
-              if (width > maxSide) {
-                height *= maxSide / width;
-                width = maxSide;
+              if (width > MAX_DIM) {
+                height *= MAX_DIM / width;
+                width = MAX_DIM;
               }
             } else {
-              if (height > maxSide) {
-                width *= maxSide / height;
-                height = maxSide;
+              if (height > MAX_DIM) {
+                width *= MAX_DIM / height;
+                height = MAX_DIM;
               }
             }
 
@@ -149,7 +149,7 @@ export default function Home() {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1]; // Lower quality for reference images to save quota
             setRefImages(prev => [...prev, { data: compressedBase64, mimeType: 'image/jpeg' }]);
           };
           img.src = event.target?.result;
@@ -442,8 +442,9 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          refImages: isRefine ? [] : (draftImage && draftImage.startsWith('data:image/png')
-            ? [{ data: draftImage.split(',')[1], mimeType: "image/png" }]
+          // Only send draftImage if it's a PNG/JPEG. SVG is better described by prompt to save token quota.
+          refImages: isRefine ? [] : (draftImage && (draftImage.includes('image/png') || draftImage.includes('image/jpeg'))
+            ? [{ data: draftImage.split(',')[1], mimeType: draftImage.includes('image/png') ? "image/png" : "image/jpeg" }]
             : [])
         })
       });
