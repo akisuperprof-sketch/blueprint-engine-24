@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
     try {
-        const { apiKey, prompt, refImages } = await req.json(); // refImages: array of {data: base64, mimeType: string}
+        const { apiKey, prompt, refImages } = await req.json();
 
         const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
 
@@ -13,44 +13,38 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Helper to attempt generation with a specific model
-        const tryGenerate = async (modelName: string) => {
-            const model = genAI.getGenerativeModel({ model: modelName });
-            let content: any[] = [prompt];
-            if (refImages && Array.isArray(refImages)) {
-                refImages.forEach((img: any) => {
-                    content.push({
-                        inlineData: {
-                            data: img.data,
-                            mimeType: img.mimeType
-                        }
+        // Helper: Attempt generation with optimized fallback chain
+        // We use only officially supported model names to avoid 404/429 loops
+        const modelsToTry = ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
+
+        let lastError = "";
+        let result = null;
+
+        for (const modelName of modelsToTry) {
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName });
+                let content: any[] = [prompt];
+                if (refImages && Array.isArray(refImages)) {
+                    refImages.forEach((img: any) => {
+                        content.push({ inlineData: { data: img.data, mimeType: img.mimeType } });
                     });
-                });
-            }
-            const result = await model.generateContent(content);
-            return result;
-        };
-
-        let result;
-        try {
-            // Plan A: Nano Banana Pro (Experimental/High Quality)
-            result = await tryGenerate("nano-banana-pro-preview");
-        } catch (e: any) {
-            const msg = e.message.toLowerCase();
-            console.warn("Primary image model failed, trying fallback:", msg);
-
-            // Plan B: Fallback to Stable Models if quota or model name issue
-            if (msg.includes('quota') || msg.includes('429') || msg.includes('exhausted') || msg.includes('not found') || msg.includes('valid')) {
-                try {
-                    // Try 1.5 Pro first
-                    result = await tryGenerate("gemini-1.5-pro");
-                } catch (e2) {
-                    // Finally try 1.5 Flash (Highest quota)
-                    result = await tryGenerate("gemini-1.5-flash");
                 }
-            } else {
-                throw e;
+                result = await model.generateContent(content);
+                if (result) break; // Success!
+            } catch (e: any) {
+                lastError = e.message;
+                console.warn(`Model ${modelName} failed:`, lastError);
+                // Continue to next model if it's a quota or availability issue
+                if (lastError.toLowerCase().includes('quota') || lastError.toLowerCase().includes('429') || lastError.toLowerCase().includes('exhausted')) {
+                    continue;
+                } else {
+                    break; // Critical error, stop
+                }
             }
+        }
+
+        if (!result) {
+            return NextResponse.json({ error: `全てのモデルで制限またはエラーが発生しました: ${lastError}` }, { status: 500 });
         }
 
         const response = await result.response;
@@ -78,7 +72,7 @@ export async function POST(req: Request) {
             } else {
                 returnData = { type: "text", content: text };
             }
-        };
+        }
 
         return NextResponse.json(returnData);
     } catch (error: any) {

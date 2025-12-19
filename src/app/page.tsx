@@ -287,11 +287,13 @@ ${stepsStr}
     console.error(error);
     setLoading(false);
 
-    const msg = (error.message || error.toString()).toLowerCase();
+    const rawMsg = error.message || error.toString();
+    const msg = rawMsg.toLowerCase();
+
     if (msg.includes('quota') || msg.includes('429') || msg.includes('resource_exhausted')) {
-      alert("⚠️ 【API利用制限】\nGoogle Gemini APIの無料枠上限(Quota)に達しました。\n\n・しばらく時間をおいて試す\n・別のGoogleアカウントのAPIキーを使う\n・有料プランのキーを使う\n\n等の対応が必要です。");
+      alert(`⚠️ 【API利用制限】\nGoogle Gemini APIの無料枠上限(Quota)に達しました。\n\n[詳細]: ${rawMsg}\n\n・しばらく時間をおいて試す\n・有料プランのキーを確認する\n・別のキーを設定する\n等の対応が必要です。`);
     } else {
-      alert(`エラーが発生しました:\n${msg}`);
+      alert(`エラーが発生しました:\n${rawMsg}`);
     }
   };
 
