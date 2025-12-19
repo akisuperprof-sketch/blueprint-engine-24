@@ -14,8 +14,8 @@ export async function POST(req: Request) {
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
         // Helper: Attempt generation with optimized fallback chain
-        // We use only officially supported model names to avoid 404/429 loops
-        const modelsToTry = ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
+        // We prioritize nano-banana-pro-preview as requested, then fallback to stable models
+        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"];
 
         let lastError = "";
         let result = null;
