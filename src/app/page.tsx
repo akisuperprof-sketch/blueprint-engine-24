@@ -128,7 +128,7 @@ export default function Home() {
           const img = new (window as any).Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_DIM = 512; // High-efficiency for reference images
+            const MAX_DIM = 1000;
             let width = img.width;
             let height = img.height;
 
@@ -149,7 +149,7 @@ export default function Home() {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1]; // Lower quality for reference images to save quota
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
             setRefImages(prev => [...prev, { data: compressedBase64, mimeType: 'image/jpeg' }]);
           };
           img.src = event.target?.result;
@@ -418,18 +418,44 @@ original_prompt: ${finalPrompt}
 **Visual Style:** ${selectedStyle.split('(')[0]}
 ${styleP}
 
-**Content:**
+**Content Requirements:**
 * **Title:** ${mainTitle}
+* **Language:** ${langInstruction}
 * **Structure:** Follow the 'Content Mapping' strictly.
 * **Character Role:** ${charInstruction}
 
-Ensure all text is in **${targetLanguage}**.
-Deliver a professional, production-ready graphical representation.
+**Technical Constraints:**
+* Output: High Fidelity, rich colors, professional finish.
+* Text: Must be legible, distinct from background.
+
+${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 `;
           // Also update the finalPrompt state so user sees it in "Advanced" if they open it
           setFinalPrompt(promptToUse);
         }
       }
+
+      const getDownscaledImage = async (dataUrl: string): Promise<string> => {
+        return new Promise((resolve) => {
+          const img = new (window as any).Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX = 1000;
+            let w = img.width;
+            let h = img.height;
+            if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } }
+            else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d')?.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+          };
+          img.src = dataUrl;
+        });
+      };
+
+      const finalRefData = (draftImage && draftImage.includes('image/'))
+        ? await getDownscaledImage(draftImage)
+        : null;
 
       const res = await fetch('/api/generate-image', {
         method: 'POST',
@@ -437,10 +463,10 @@ Deliver a professional, production-ready graphical representation.
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          // CRITICAL: We stop sending the visual draft image to the API during the final step.
-          // This drastically reduces TPM (token) consumption on mobile, which is causing quota errors.
-          // The detailed promptToUse contains all the logic needed for a perfect render.
-          refImages: []
+          // Re-enabling visual reference for consistency
+          refImages: isRefine ? [] : (finalRefData
+            ? [{ data: finalRefData, mimeType: "image/jpeg" }]
+            : [])
         })
       });
 

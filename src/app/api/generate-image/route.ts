@@ -5,7 +5,6 @@ export async function POST(req: Request) {
     try {
         const { apiKey, prompt, refImages } = await req.json();
 
-        // Check if the individual API key is present, otherwise fallback
         const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
 
         if (!finalApiKey) {
@@ -14,60 +13,56 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Models to try in order. 
-        // We prioritize nano-banana-pro-preview as requested.
-        // We use gemini-1.5-flash as the ultimate fallback because it has the highest TPM limit.
-        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
+        // 優先順位: 1. nano (指定) -> 2. 2.0-flash (最新) -> 3. 1.5-flash (安定)
+        // 有料キーでも nano が制限される環境があるため、確実なフォールバックを組みます。
+        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
 
         let lastError = "";
         let result = null;
 
         for (const modelName of modelsToTry) {
             try {
+                console.log(`Starting generation with model: ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
-
-                // Construct content: Text first, then images
                 let content: any[] = [prompt];
 
                 if (refImages && Array.isArray(refImages)) {
                     refImages.forEach((img: any) => {
-                        if (img.data && img.mimeType) {
-                            content.push({
-                                inlineData: {
-                                    data: img.data,
-                                    mimeType: img.mimeType
-                                }
-                            });
+                        if (img.data) {
+                            content.push({ inlineData: { data: img.data, mimeType: img.mimeType || "image/jpeg" } });
                         }
                     });
                 }
 
-                // Set a timeout for the individual model call (to avoid mobile hangs)
+                // 画像生成は時間がかかるため、タイムアウトを90秒に設定
                 const generatePromise = model.generateContent(content);
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 25000));
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 90000)
+                );
 
                 result = await Promise.race([generatePromise, timeoutPromise]) as any;
-                if (result) break;
+                if (result) {
+                    console.log(`Success with model: ${modelName}`);
+                    break;
+                }
             } catch (e: any) {
                 lastError = e.message;
-                console.warn(`Model ${modelName} failed on server:`, lastError);
+                console.warn(`Model ${modelName} attempt failed:`, lastError);
 
-                // If it's a Quota error, wait a moment and try the next one
-                if (lastError.toLowerCase().includes('quota') || lastError.toLowerCase().includes('429')) {
-                    await new Promise(r => setTimeout(r, 2000));
+                // 制限エラー (429/Quota) または モデル不在 (404) の場合は次のモデルへ
+                if (lastError.includes('quota') || lastError.includes('429') || lastError.includes('not found')) {
+                    // 連続リクエストによるスパム判定を避けるため1秒微休
+                    await new Promise(r => setTimeout(r, 1000));
                     continue;
                 } else {
-                    // For other errors, we still try next model unless it's a fatal key issue
-                    if (lastError.includes("API key")) break;
-                    continue;
+                    // その他の致命的なエラーはここで終了
+                    break;
                 }
             }
         }
 
         if (!result) {
-            return NextResponse.json({
-                error: `画像生成に失敗しました。\n[原因]: ${lastError}\n[対策]: しばらく待つか、スタイルを変えてみてください。`
-            }, { status: 500 });
+            throw new Error(`全てのモデルで生成に失敗しました。最後のエラー: ${lastError}`);
         }
 
         const response = await result.response;
@@ -85,7 +80,6 @@ export async function POST(req: Request) {
         } else if (firstPart?.text) {
             const text = firstPart.text;
             const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
-
             if (svgMatch) {
                 let svgCode = svgMatch[0];
                 if (!svgCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
@@ -99,6 +93,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json(returnData);
     } catch (error: any) {
+        console.error("Critical API error:", error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
