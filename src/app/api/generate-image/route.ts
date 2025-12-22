@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
         // 優先順位: 1. nano (指定) -> 2. 2.0-flash (最新) -> 3. 1.5-flash (安定)
         // 有料キーでも nano が制限される環境があるため、確実なフォールバックを組みます。
-        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
+        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
 
         let lastError = "";
         let result = null;
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
 
                 // 制限エラー (429/Quota) または モデル不在 (404) の場合は次のモデルへ
                 if (lastError.includes('quota') || lastError.includes('429') || lastError.includes('not found')) {
-                    // 連続リクエストによるスパム判定を避けるため1秒微休
-                    await new Promise(r => setTimeout(r, 1000));
+                    // 連続リクエストによるスパム判定を避けるため2秒待機 (SPECIFICATION.md: Retry Delay 2s)
+                    await new Promise(r => setTimeout(r, 2000));
                     continue;
                 } else {
                     // その他の致命的なエラーはここで終了

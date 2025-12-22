@@ -128,7 +128,8 @@ export default function Home() {
           const img = new (window as any).Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_DIM = 1000;
+            // SPECIFICATION.md: Upload images resized to 512px (max-side)
+            const MAX_DIM = 512;
             let width = img.width;
             let height = img.height;
 
@@ -149,7 +150,8 @@ export default function Home() {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            // SPECIFICATION.md: Compression quality set to 0.5 (JPEG)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
             setRefImages(prev => [...prev, { data: compressedBase64, mimeType: 'image/jpeg' }]);
           };
           img.src = event.target?.result;
@@ -463,10 +465,11 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          // Re-enabling visual reference for consistency
-          refImages: isRefine ? [] : (finalRefData
-            ? [{ data: finalRefData, mimeType: "image/jpeg" }]
-            : [])
+          // refImages: isRefine ? [] : (finalRefData
+          //   ? [{ data: finalRefData, mimeType: "image/jpeg" }]
+          //   : [])
+          // SPECIFICATION.md: Draft images are NOT sent as visual references during final rendering to save bandwidth and quota.
+          refImages: []
         })
       });
 
