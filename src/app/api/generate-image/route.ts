@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
     try {
-        const { apiKey, prompt, refImages, aspectRatio } = await req.json();
+        const body = await req.json();
+        const { apiKey, prompt, refImages, aspectRatio } = body;
 
         const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
 
@@ -18,12 +19,18 @@ export async function POST(req: Request) {
         // We include "imagen-3.0-generate-001" as a reliable fallback for high-quality image generation.
         // User insists they have access to these models. We will try them.
         // If 404, we will log available models to debug.
-        const modelsToTry = [
+        let modelsToTry = [
             "imagen-3.0-generate-001",
             "gemini-3-pro-image-preview",   // User feedback
             "nano-banana-pro-preview",      // User feedback
             "gemini-2.0-flash-exp"          // Reliable fallback
         ];
+
+        // OVERRIDE: If frontend requests a specific model (e.g. for NoText mode)
+        if (body.settings && body.settings.preferredModel) {
+            console.log("DEBUG: Using preferred model:", body.settings.preferredModel);
+            modelsToTry = [body.settings.preferredModel];
+        }
         // Note: Deprecated preview models (nano-banana, 3-pro-preview) caused 404 or text-only responses.
         // We stick to the official Imagen 3 and the reliable Gemini 2 Flash.
 

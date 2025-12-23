@@ -718,23 +718,20 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
       // NO TEXT OVERRIDE
       if (isNoText) {
         promptToUse = `
-**OPERATION: TEXT REMOVAL & BACKGROUND RESTORATION**
-Input is an infographic with text overlays.
-**GOAL:** Generate the **clean base illustration** with ALL TEXT REMOVED.
+**OPERATION: TEXT REMOVAL & BACKGROUND RESTORATION (文字消し・背景加工)**
+Input is an infographic with Japanese/English text overlays.
+**GOAL:** Generate a CLEAN BASE MATERIAL with all text removed. (文字を全て消した「空の背景素材」を作成してください)
 
-**Specific Instructions:**
-1. **Treat all text as "Unwanted Objects":** Identify every letter, character, and number as an occlusion.
-2. **Action - Remove & Repair:** 
-   - Remove the text.
-   - **Repair the background** behind the text using context-aware fill (extend the background color/texture).
-3. **Preserve Containers:**
-   - **Keep** the speech bubbles, panels, and title boxes.
-   - **Empty them:** The containers must be purely solid color (e.g., if a bubble is white, keep it white but empty).
-4. **Strict Constraint:** The final output must contain **ZERO text**. 
-   - No gibberish, no squiggles.
-   - Just graphical shapes and characters.
+**Instructions (指示):**
+1. **Remove all characters (文字の完全除去):** Identify and delete every letter, Kanji, Hiragana, Katakana, and number.
+2. **Action - Erase & Repair (消去と修復):** 
+   - 文字を完全に消し、背後の色やテクスチャで補完してください。
+   - **Keep Original Color (元の色を維持):** Speech bubbles (吹き出し) and title bars must keep their colors but be EMPTY (空白).
+   - **Do not make everything white (全てを白くしない):** If a box was blue, the resulting empty box must also be blue.
+3. **Outcome (結果):** A professional illustration "Base Layer" ready for a human to add new text via Photoshop.
+4. **Constraint (制約):** ZERO TEXT. No squiggles, no fake characters. (文字や文字に見える模様は一切入れないでください)
 
-**Reference handling:** Use the provided image structure strictly, but ignore the pixel data of the text itself.
+**Reference:** Use the provided image structure strictly.
 `;
       }
 
@@ -766,6 +763,8 @@ Input is an infographic with text overlays.
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
+          // For NoText mode, use Gemini 2.0 Flash as it follows "erase" instructions better than Pro
+          settings: isNoText ? { preferredModel: 'gemini-2.0-flash-exp' } : {},
           refImages: (isRefine && !isNoText) ? [] : (finalRefData // Only empty refImages if pure Refine (text edit). For NoText, we need ref.
             ? [{ data: finalRefData, mimeType: "image/jpeg" }]
             : []),
