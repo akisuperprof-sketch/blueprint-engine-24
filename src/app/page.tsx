@@ -477,7 +477,8 @@ ${stepsStr}
       } else if (data.type === 'svg') {
         setDraftImage(`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(data.content)))}`);
       } else {
-        alert("モデルが画像を返しませんでした。テキスト: " + data.content.substring(0, 50) + "...");
+        const contentPreview = data.content ? data.content.substring(0, 50) : "No content";
+        alert("モデルが画像を返しませんでした。テキスト: " + contentPreview + "...");
       }
       setPhase('draft');
     } catch (e: any) { handleError(e); }
