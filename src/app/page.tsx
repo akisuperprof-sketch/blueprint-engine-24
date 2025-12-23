@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Clock, Check, ChevronRight, RotateCcw, Download, Upload, Image as ImageIcon, Copy, Search, Edit3 } from 'lucide-react';
+import { Settings, Clock, Check, ChevronRight, RotateCcw, Download, Upload, Image as ImageIcon, Copy, Search, Edit3, Zap } from 'lucide-react';
 import { ARCHETYPES, STYLE_PROMPTS, STYLE_ICONS, STYLE_PREVIEWS } from '@/lib/constants';
 import Image from 'next/image';
 
@@ -84,6 +84,7 @@ export default function Home() {
 
 
   const [usedModel, setUsedModel] = useState<string | null>(null);
+  const [highQualityMode, setHighQualityMode] = useState(false);
 
   // Loading States
   const [loading, setLoading] = useState(false);
@@ -704,6 +705,7 @@ ${styleP}
 ${constructDraftPrompt()}
 
 **Visual Quality:** Masterpiece, ultra-high definition, 8k resolution, extremely detailed textures, sharp focus, professional color grading. Ensure every line is crisp and clean.
+${highQualityMode ? "CRITICAL: GENERATE AS A HIGH-FIDELITY SVG CODE BLOCK if possible to ensure infinite resolution. If you must output an image, use the highest internal resolution settings." : ""}
 
 ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 `;
@@ -1800,7 +1802,21 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                     })}
                   </div>
 
-                  <div className="flex justify-center mt-8">
+                  <div className="flex flex-col items-center gap-4 mt-8">
+                    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+                      <input
+                        type="checkbox"
+                        id="hq-mode"
+                        checked={highQualityMode}
+                        onChange={(e) => setHighQualityMode(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <label htmlFor="hq-mode" className="text-sm font-bold text-slate-600 cursor-pointer flex items-center gap-2">
+                        <Zap className={`w-4 h-4 ${highQualityMode ? 'text-yellow-500 fill-yellow-500' : 'text-slate-400'}`} />
+                        高精細モード (SVG優先)
+                      </label>
+                    </div>
+
                     <button
                       onClick={() => generateFinal(false)}
                       disabled={loading}
@@ -1808,6 +1824,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                     >
                       {loading ? '清書中...' : '💫 完成画像を生成する'}
                     </button>
+                    <p className="text-[10px] text-slate-400 italic">※高精細モードは生成に時間がかかる場合があります</p>
                   </div>
                 </>
               ) : (
