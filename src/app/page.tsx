@@ -558,8 +558,16 @@ ${stepsStr}
 
     ctx.drawImage(img, 0, 0);
 
-    const pixelX = Math.floor((xPercent / 100) * canvas.width);
-    const pixelY = Math.floor((yPercent / 100) * canvas.height);
+    // Pick color from slightly TOP-LEFT of the center to avoid picking the text itself (if it was already drawn, though here we read raw image)
+    // Actually, we are reading the original clean image, so we just need accuracy.
+    // However, user said "upper part cannot be picked".
+    // Let's try to pick from (x - 2%, y - 2%) to get the surrounding background more likely.
+
+    const targetX = Math.max(0, xPercent - 2);
+    const targetY = Math.max(0, yPercent - 2);
+
+    const pixelX = Math.floor((targetX / 100) * canvas.width);
+    const pixelY = Math.floor((targetY / 100) * canvas.height);
 
     const data = ctx.getImageData(pixelX, pixelY, 1, 1).data;
     // Convert to Hex
@@ -616,9 +624,10 @@ ${stepsStr}
       ctx.textAlign = 'center';
 
       const metrics = ctx.measureText(layer.text);
-      const padding = renderFontSize * 0.6;
-      const boxWidth = metrics.width + padding;
-      const boxHeight = renderFontSize * 1.5;
+      // Minimal Padding for tighter fit
+      const padding = renderFontSize * 0.2;
+      const boxWidth = metrics.width + padding * 2;
+      const boxHeight = renderFontSize * 1.2;
 
       // Draw background
       ctx.fillStyle = layer.bgColor || "#ffffff";
@@ -1796,17 +1805,17 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                               >
                                 {/* Text Box */}
                                 <div
-                                  className={`px-3 py-1.5 rounded shadow-sm border
+                                  className={`px-1 py-0.5 rounded-sm shadow-sm border
                                     ${selectedTextId === layer.id
-                                      ? 'border-blue-500 ring-2 ring-blue-200 shadow-xl'
+                                      ? 'border-blue-500 ring-1 ring-blue-200 shadow-xl'
                                       : 'border-transparent hover:border-slate-300'
                                     }
                                  `}
                                   style={{ backgroundColor: layer.bgColor || '#ffffff' }}
                                 >
                                   <span
-                                    className="font-bold text-black whitespace-nowrap pointer-events-none block"
-                                    style={{ fontSize: layer.fontSize ? `${layer.fontSize}px` : '24px' }}
+                                    className="font-bold text-black whitespace-nowrap pointer-events-none block leading-none"
+                                    style={{ fontSize: layer.fontSize ? `${layer.fontSize}px` : '24px', fontFamily: '"Noto Sans JP", sans-serif' }}
                                   >
                                     {layer.text}
                                   </span>
