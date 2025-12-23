@@ -97,9 +97,34 @@ export default function Home() {
       finalPrompt: prompt,
       draftData: draftData
     };
-    const newHistory = [newItem, ...history];
-    setHistory(newHistory);
-    localStorage.setItem('scheme_maker_history', JSON.stringify(newHistory));
+
+    // 容量制限対策: 古い履歴を削除してスペースを確保する
+    let currentHistory = [...history];
+    const MAX_ATTEMPTS = 5;
+
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      try {
+        const newHistoryJson = JSON.stringify([newItem, ...currentHistory]);
+        localStorage.setItem('scheme_maker_history', newHistoryJson);
+        setHistory([newItem, ...currentHistory]);
+        console.log("History saved successfully.");
+        return; // Success
+      } catch (e: any) {
+        if (e.name === 'QuotaExceededError' || e.message.includes('quota')) {
+          console.warn("LocalStorage quota exceeded. Removing oldest item and retrying...");
+          if (currentHistory.length > 0) {
+            currentHistory.pop(); // Remove the oldest item
+          } else {
+            console.error("Cannot save history: Storage full and no items to remove.");
+            return; // Give up
+          }
+        } else {
+          console.error("Failed to save history:", e);
+          return; // Unknown error
+        }
+      }
+    }
+    console.error("Failed to save history after multiple attempts.");
   };
 
   const deleteHistory = (id: string, e: React.MouseEvent) => {
@@ -291,6 +316,12 @@ ${stepsStr}
 
     const rawMsg = error.message || error.toString();
     const msg = rawMsg.toLowerCase();
+
+    // Check for LocalStorage Quota Exceeded (not API quota)
+    if (msg.includes('setitem') && msg.includes('quota')) {
+      alert(`⚠️ 【保存容量エラー】\nブラウザの履歴保存容量がいっぱいです。\n古い履歴を削除するか、キャッシュをクリアしてください。\n(画像は生成されていますが、履歴には保存されませんでした)`);
+      return;
+    }
 
     if (msg.includes('quota') || msg.includes('429') || msg.includes('resource_exhausted')) {
       alert(`⚠️ 【API利用制限】\nGoogle Gemini APIの無料枠上限(Quota)に達しました。\n\n[詳細]: ${rawMsg}\n\n・しばらく時間をおいて試す\n・有料プランのキーを確認する\n・別のキーを設定する\n等の対応が必要です。`);
