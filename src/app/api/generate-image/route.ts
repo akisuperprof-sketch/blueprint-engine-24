@@ -70,7 +70,21 @@ export async function POST(req: Request) {
                     const part = candidates?.[0]?.content?.parts?.[0];
 
                     const hasImage = !!part?.inlineData;
-                    const hasSvg = part?.text && part.text.match(/<svg[\s\S]*?<\/svg>/i);
+                    // Enhanced SVG detection: Look for standard SVG tags AND markdown code blocks containing SVG
+                    let foundSvg = null;
+                    if (part?.text) {
+                        const svgMatch = part.text.match(/<svg[\s\S]*?<\/svg>/i);
+                        if (svgMatch) {
+                            foundSvg = svgMatch[0];
+                        } else {
+                            // Check for markdown code block
+                            const codeBlockMatch = part.text.match(/```(?:xml|svg)?\s*(<svg[\s\S]*?<\/svg>)\s*```/i);
+                            if (codeBlockMatch && codeBlockMatch[1]) {
+                                foundSvg = codeBlockMatch[1];
+                            }
+                        }
+                    }
+                    const hasSvg = !!foundSvg;
 
                     if (hasImage || hasSvg) {
                         console.log(`Success with model: ${modelName} (Image: ${hasImage}, SVG: ${!!hasSvg})`);
@@ -116,7 +130,16 @@ export async function POST(req: Request) {
             };
         } else if (firstPart?.text) {
             const text = firstPart.text;
-            const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
+            let svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
+
+            // Should match the logic used in loop
+            if (!svgMatch) {
+                const codeBlockMatch = text.match(/```(?:xml|svg)?\s*(<svg[\s\S]*?<\/svg>)\s*```/i);
+                if (codeBlockMatch && codeBlockMatch[1]) {
+                    svgMatch = [codeBlockMatch[1]];
+                }
+            }
+
             if (svgMatch) {
                 let svgCode = svgMatch[0];
                 if (!svgCode.includes('xmlns="http://www.w3.org/2000/svg"')) {

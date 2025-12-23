@@ -286,7 +286,12 @@ Title: ${draftData.main_title}
 Summary: ${draftData.summary}
 Archtype: ${draftData.archetype_name}
 
-${stepsStr}
+
+**CRITICAL INSTRUCTION:**
+1. **DO NOT generate a text explanation.** 
+2. **GENERATE AN IMAGE (or SVG) ONLY.**
+3. If you cannot generate an image directly, generate a High-Fidelity SVG code block representing the design.
+4. **NO CHATTER. NO PREAMBLE.** Just the visual output.
 `;
   };
 
