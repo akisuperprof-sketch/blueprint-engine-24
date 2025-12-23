@@ -55,8 +55,22 @@ export async function POST(req: Request) {
 
                 result = await Promise.race([generatePromise, timeoutPromise]) as any;
                 if (result) {
-                    console.log(`Success with model: ${modelName}`);
-                    break;
+                    // Validate if the result actually contains an image or SVG
+                    const response = await result.response;
+                    const candidates = await response.candidates;
+                    const part = candidates?.[0]?.content?.parts?.[0];
+
+                    const hasImage = !!part?.inlineData;
+                    const hasSvg = part?.text && part.text.match(/<svg[\s\S]*?<\/svg>/i);
+
+                    if (hasImage || hasSvg) {
+                        console.log(`Success with model: ${modelName} (Image: ${hasImage}, SVG: ${!!hasSvg})`);
+                        break;
+                    } else {
+                        console.warn(`Model ${modelName} returned no image/svg. Response: ${part?.text?.substring(0, 100)}...`);
+                        lastError = `Model ${modelName} returned valid response but no image/svg.`;
+                        result = null; // Discard result and try next model
+                    }
                 }
             } catch (e: any) {
                 lastError = e.message;
