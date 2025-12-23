@@ -59,6 +59,7 @@ export default function Home() {
   const [layoutFeedback, setLayoutFeedback] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('ビジネス・プロ (Business Pro)');
   const [finalImage, setFinalImage] = useState<string | null>(null);
+  const [finalImageNoText, setFinalImageNoText] = useState<string | null>(null);
   const [refineInst, setRefineInst] = useState('');
 
   // Text Edit Mode State
@@ -654,10 +655,10 @@ Archtype: ${draftData.archetype_name}
   };
 
   // Step 4: Final Generation
-  const generateFinal = async (isRefine = false) => {
+  const generateFinal = async (isRefine = false, isNoText = false) => {
     // Allow empty key - backend will check env var
     setLoading(true);
-    setLoadingMessage(isRefine ? "ブループリントAIが修正しています... (再生成)" : "ブループリントAIが最後の仕上げをしています... (清書)");
+    setLoadingMessage(isNoText ? "文字なし素材（背景）を作成中..." : (isRefine ? "ブループリントAIが修正しています... (再生成)" : "ブループリントAIが最後の仕上げをしています... (清書)"));
 
     try {
       let promptToUse = "";
@@ -710,8 +711,19 @@ ${constructDraftPrompt()}
 ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 `;
           // Also update the finalPrompt state so user sees it in "Advanced" if they open it
-          setFinalPrompt(promptToUse);
+          if (!isNoText) setFinalPrompt(promptToUse);
         }
+      }
+
+      // NO TEXT OVERRIDE
+      if (isNoText) {
+        promptToUse += `
+            \n\n**IMPORTANT OVERRIDE: NO TEXT MODE**
+            1. Keep the EXACT same layout, composition, and style.
+            2. **DO NOT WRITE ANY TEXT.** Leave all text boxes BLANK (empty).
+            3. Use the same background colors for text boxes, but make them empty.
+            4. This image will be used as a background material where text will be added later by a human.
+          `;
       }
 
       const getDownscaledImage = async (dataUrl: string): Promise<string> => {
@@ -742,7 +754,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          refImages: isRefine ? [] : (finalRefData
+          refImages: (isRefine || isNoText) ? [] : (finalRefData
             ? [{ data: finalRefData, mimeType: "image/jpeg" }]
             : []),
           // Re-enabled draft image reference for better fidelity
@@ -756,17 +768,25 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
       let resultUrl = "";
       if (data.type === 'image') {
         resultUrl = `data:${data.mimeType};base64,${data.data}`;
-        setFinalImage(resultUrl);
+        if (isNoText) {
+          setFinalImageNoText(resultUrl);
+        } else {
+          setFinalImage(resultUrl);
+        }
         if (data.usedModel) setUsedModel(data.usedModel);
       } else if (data.type === 'svg') {
         resultUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(data.content)))}`;
-        setFinalImage(resultUrl);
+        if (isNoText) {
+          setFinalImageNoText(resultUrl);
+        } else {
+          setFinalImage(resultUrl);
+        }
       } else {
         throw new Error("画風の生成に失敗しました。別のスタイルを試してください。");
       }
 
-      // Auto Save to History
-      if (resultUrl) {
+      // Auto Save to History (Only for main image)
+      if (resultUrl && !isNoText) {
         saveToHistory(resultUrl, promptToUse);
       }
 
@@ -1790,6 +1810,47 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                         >
                           <RotateCcw className="w-4 h-4" /> スタイル変更
                         </button>
+                      </div>
+
+                      {/* No Text Material Generator */}
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4">
+                        <h4 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4" /> 納品用素材の作成
+                        </h4>
+                        <p className="text-xs text-slate-500 mb-3">
+                          文字を後から編集ソフトで入れたい場合、文字なし（枠のみ）の画像を作成できます。
+                        </p>
+
+                        {!finalImageNoText ? (
+                          <button
+                            onClick={() => generateFinal(true, true)} // isRefine=true (to use prompt), isNoText=true
+                            disabled={loading}
+                            className="w-full py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm font-bold flex items-center justify-center gap-2"
+                          >
+                            文字なし版（背景素材）を生成する
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="rounded-lg overflow-hidden border border-slate-200">
+                              <img src={finalImageNoText} className="w-full h-auto opacity-80" alt="No Text Version" />
+                            </div>
+                            <div className="flex gap-2">
+                              <a
+                                href={finalImageNoText}
+                                download={`blueprint_notext_${Date.now()}.png`}
+                                className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold text-center hover:bg-slate-700 flex items-center justify-center gap-1"
+                              >
+                                <Download className="w-3 h-3" /> 素材DL
+                              </a>
+                              <button
+                                onClick={() => setFinalImageNoText(null)}
+                                className="px-3 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs hover:bg-slate-300"
+                              >
+                                やり直す
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
