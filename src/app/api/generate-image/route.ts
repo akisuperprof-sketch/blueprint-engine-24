@@ -13,10 +13,15 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Create a list of models to try. Prioritize latest experimental models that support image generation.
-        // Note: gemini-1.5-flash / pro do NOT support creating images directly via generateContent in some environments, or require specific tools.
-        // We will focus on Gemini 2.0 Flash Exp which has native image generation capabilities enabled in the beta.
-        const modelsToTry = ["gemini-2.0-flash-exp", "gemini-2.0-flash-thinking-exp-1219"];
+        // Create a list of models to try.
+        // User explicitly requested high-quality graphic models (nano-banana, gemini-3-pro).
+        // We include "imagen-3.0-generate-001" as a reliable fallback for high-quality image generation.
+        const modelsToTry = [
+            "imagen-3.0-generate-001", // Production Imagen 3
+            "gemini-3-pro-image-preview",   // User requested
+            "nano-banana-pro-preview",      // User requested
+            "gemini-2.0-flash-exp"          // Reliable fallback
+        ];
 
         let lastError = "";
         let result = null;
