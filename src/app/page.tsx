@@ -13,7 +13,9 @@ interface DraftData {
   summary?: string;
   recommended_style?: string;
   archetype_name?: string;
-  steps?: { label: string; visual_desc: string }[];
+  header?: { heading: string; content: string; visual_desc: string };
+  footer?: { heading: string; content: string; visual_desc: string };
+  steps?: { type?: string; heading?: string; content?: string; label?: string; visual_desc: string }[];
 }
 
 interface HistoryItem {
@@ -196,45 +198,58 @@ export default function Home() {
 
   // --- Helpers for Prompts ---
   const constructDraftPrompt = () => {
-    const stepsStr = draftData.steps?.map((s: any, i: number) => `    ${i + 1}. **${s.label}**: ${s.visual_desc}`).join('\n') || "";
+    let stepsStr = "";
 
-    const charRef = refImages.length > 0
-      ? (refImageRole === 'narrator'
-        ? "Please use the character from the reference image as a 'narrator/commentator' who explains the content (placed at the side with a speech bubble)."
-        : "Capture the visual style/elements from the input reference images and incorporate them into the main diagram.")
-      : "なし";
+    // HEADER
+    if (draftData.header) {
+      stepsStr += `
+🏷️ HEADER
+**Heading:** ${draftData.header.heading}
+**Content:** ${draftData.header.content}
+**Visual:** ${draftData.header.visual_desc}
+`;
+    }
 
-    let langInstruction = targetLanguage === 'Japanese'
-      ? "図中のテキストラベルは**すべて日本語**で記述すること（Example: 「Water」ではなく「給水タンク」）。"
-      : `All text labels inside the image MUST be in **${targetLanguage}**.`;
+    // BLOCKS
+    if (draftData.steps) {
+      draftData.steps.forEach((s: any, i: number) => {
+        stepsStr += `
+📦 BLOCK ${i + 1}
+**Heading:** ${s.heading || s.label}
+**Content:** ${s.content || ""}
+**Visual:** ${s.visual_desc}
+`;
+      });
+    }
+
+    // FOOTER
+    if (draftData.footer) {
+      stepsStr += `
+📝 FOOTER
+**Heading:** ${draftData.footer.heading}
+**Content:** ${draftData.footer.content}
+**Visual:** ${draftData.footer.visual_desc}
+`;
+    }
 
     return `
-**役割:** 熟練したインフォグラフィックデザイナー
-**目的:** ${draftData.main_title}に基づいた明確で美しいインフォグラフィックのラフスケッチ生成
+You are an expert infographic designer. Create a DRAFT LAYOUT sketch based on the following structure.
+**Draft Requirements:**
+1. Draw a clean, black-and-white line drawing.
+2. Layout the sections (Header, Blocks, Footer) logically.
+3. Draw the visuals described for each section.
+4. Place placeholders for text, but focus on the composition.
+5. **IMPORTANT:** If the "Visual" instruction mentions a character or person, draw them clearly in the specified pose.
 
-**1. テーマとスタイルの定義**
-* **メインタイトル:** ${draftData.main_title}
-* **概要・目的:** ${draftData.summary}
-* **言語指定:** ${langInstruction}
-* **推奨スタイル:** ${draftData.recommended_style || 'モダンで清潔感のあるベクターイラスト'}
+**Structure Content:**
+Title: ${draftData.main_title}
+Summary: ${draftData.summary}
+Archtype: ${draftData.archetype_name}
 
-**2. 構造の定義 (Structural Archetype)**
-* **採用する構造:** ${draftData.archetype_name}
-
-**3. キャラクター参照 (Character Reference)**
-* ${charRef}
-
-**4. コンテンツのマッピング (Content Mapping)**
-* **ヘッダーエリア:** タイトル「${draftData.main_title}」を上部に配置。
-* **メイン構造ブロック:** 以下の順序でイラストと日本語ラベルを配置し、矢印でつなぐ。
 ${stepsStr}
-* **フッターエリア:** 特になし。全体をスッキリとまとめる。
 
-【重要】これは最終的なデザインではなく、あくまで「ラフスケッチ」です。
-* 線画、または非常にシンプルな塗り分けで構成してください。
-* 色は最小限に抑え、構造と配置が明確にわかるようにしてください。
-* テキストはプレースホルダーで構いませんが、配置は正確に。
-* 複雑なテクスチャや詳細な描写は不要です。
+* Keep it simple (sketch style).
+* Ensure clear separation between blocks.
 `;
   };
 
@@ -256,7 +271,7 @@ ${stepsStr}
     }
 
     setLoading(true);
-    setLoadingMessage("解析中... (構造化)");
+    setLoadingMessage("Nano Banana Proが思考中... (構造化)");
     try {
       const prompt = `
             あなたはプロの編集者です。以下のテキストをインフォグラフィックにするための構成案を作成し、
@@ -277,19 +292,35 @@ ${stepsStr}
             ${refImages.length > 0 ? `\n【参考画像あり】\n画像を参考に、その雰囲気や構造要素を取り入れてください。(画像の要素反映は「${isRefMandatory ? "必須" : "任意"}」です)` : ""}
 
             【出力JSONフォーマット】
+            **注意: 以前よりも詳細な構造が必要です。以下のフォーマットを厳守してください。**
             {
                 "main_title": "タイトル",
                 "summary": "この図解の目的・概要（1文で）",
                 "recommended_style": "この内容に最適な具体的なデザインスタイル指示（例：清潔感のあるモダンなベクターイラスト。配色は...）",
                 "archetype_name": "${archetype}",
+                "header": {
+                    "heading": "ヘッダー見出し（キャッチーに）",
+                    "content": "導入テキストやサブタイトル",
+                    "visual_desc": "ヘッダーの視覚的要素。参考画像がある場合は、そのキャラクターをどう配置するか（例：案内棒を持ってタイトルを指している）"
+                },
                 "steps": [
                     {
-                        "label": "ステップ名（例：1. 給水タンク）",
-                        "visual_desc": "具体的な絵の指示（例：水の入ったタンク）"
+                        "type": "block",
+                        "heading": "ステップの見出し（例：1. 豆を選ぶ）",
+                        "content": "詳細な説明文（2-3行で具体的に）",
+                        "visual_desc": "このステップの具体的なイラスト指示。「誰が」「何を」しているか。参考画像のキャラが登場する場合はそのポーズも指定（例：キャラがOKサインを出している、キャラがコーヒーを注いでいる）"
                     }
-                ]
+                ],
+                "footer": {
+                    "heading": "まとめ/結論の見出し",
+                    "content": "締めくくりのメッセージ",
+                    "visual_desc": "フッターの視覚要素（例：キャラが完成品を持って微笑んでいる）"
+                }
             }
+            ※\`steps\`は内容に応じて適切な数（3〜6個程度推奨）生成してください。
+            ※\`visual_desc\`は画像生成AIへのプロンプトになるため、具体的なオブジェクト、キャラクターのポーズ、構図を詳細に記述してください。単なる「イラスト」という言葉は避け、「〜が〜している様子」と書いてください。
             `;
+
 
       const res = await fetch('/api/generate-text', {
         method: 'POST',
@@ -347,6 +378,7 @@ ${stepsStr}
 
             【制約】
             出力言語は引き続き「${targetLanguage}」を維持してください。
+            JSON構造（header, steps, footerの形式）を崩さないでください。
             
             【出力】
             修正後のJSONのみを出力してください。Markdownタグ不要。
@@ -381,7 +413,7 @@ ${stepsStr}
         final_prompt_text = constructDraftPrompt();
       }
 
-      setLoadingMessage("ラフスケッチ生成中...");
+      setLoadingMessage("ブループリントAIがラフ画を描いています... (ドラフト作成)");
 
       // Update finalPrompt state for next step editing
       setFinalPrompt(final_prompt_text);
@@ -414,7 +446,7 @@ ${stepsStr}
   const generateFinal = async (isRefine = false) => {
     // Allow empty key - backend will check env var
     setLoading(true);
-    setLoadingMessage(isRefine ? "微調整中..." : "最終工程で清書中です... (高品質生成)");
+    setLoadingMessage(isRefine ? "ブループリントAIが修正しています... (再生成)" : "ブループリントAIが最後の仕上げをしています... (清書)");
 
     try {
       let promptToUse = "";
@@ -631,6 +663,15 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               </h2>
               <button onClick={() => setIsHistoryOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
             </div>
+
+            {history.length >= 3 && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex gap-2 items-start animate-pulse">
+                <span className="text-lg">⚠️</span>
+                <div>
+                  <strong>容量警告:</strong> ブラウザの動作を軽くするため、不要な履歴はこまめに削除してください。（推奨目安: 3枚以内）
+                </div>
+              </div>
+            )}
 
             {history.length === 0 ? (
               <p className="text-slate-500 text-sm text-center py-10">履歴はまだありません。</p>
@@ -850,6 +891,15 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                 <ImageIcon className="w-5 h-5 text-blue-500" /> 参考画像・キャラクター (任意)
               </h3>
               <div className="flex flex-col gap-3 mb-4">
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
+                  <h5 className="font-bold text-blue-800 text-sm mb-1 flex items-center gap-2">
+                    💡 活用テクニック: 自分のキャラを登場させる！
+                  </h5>
+                  <p className="text-xs text-blue-700 leading-relaxed">
+                    自分のアイコンや製品写真をアップすると、図解の中に登場させることができます。
+                    <strong>白背景や単色背景の画像</strong>を使うと、より綺麗に認識されます！
+                  </p>
+                </div>
                 <div className="flex items-center gap-4">
                   <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                     <Upload className="w-4 h-4" /> アップロード
@@ -965,31 +1015,75 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             </div>
 
             <div className="space-y-4 mt-8">
-              <h3 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">STEP</span> 構成要素の編集
+              {/* HEADER EDIT */}
+              {draftData.header && (
+                <div className="bg-slate-800 text-white p-4 rounded-xl shadow-sm mb-6">
+                  <h4 className="font-bold text-xs uppercase tracking-wider mb-3 border-b border-slate-600 pb-1 text-slate-300">Header</h4>
+                  <div className="space-y-3">
+                    <input
+                      value={draftData.header.heading}
+                      onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, heading: e.target.value } })}
+                      className="w-full bg-slate-700 border-none text-white font-bold p-2 rounded focus:ring-2 focus:ring-blue-500"
+                      placeholder="ヘッダー見出し..."
+                    />
+                    <input
+                      value={draftData.header.content}
+                      onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, content: e.target.value } })}
+                      className="w-full bg-slate-700 border-none text-slate-300 text-sm p-2 rounded focus:ring-2 focus:ring-blue-500"
+                      placeholder="サブタイトルなど..."
+                    />
+                    <input
+                      value={draftData.header.visual_desc}
+                      onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, visual_desc: e.target.value } })}
+                      className="w-full bg-slate-700 border-none text-slate-400 text-xs p-2 rounded focus:ring-2 focus:ring-blue-500"
+                      placeholder="ヘッダーの視覚指示..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              <h3 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2 mt-8">
+                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">BLOCKS</span> 構成要素の編集
               </h3>
               {draftData.steps?.map((step: any, idx: number) => (
-                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-4">
                   <div className="flex gap-4 items-start">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-1">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0 mt-1">
                       {idx + 1}
                     </div>
                     <div className="flex-1 space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-slate-500 mb-1 block">ラベル (Label)</label>
+                        <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Heading / Point</label>
                         <input
-                          value={step.label}
+                          value={step.heading || step.label}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const newSteps = [...(draftData.steps || [])];
+                            newSteps[idx].heading = e.target.value;
+                            // Keep label synced for backward compatibility if needed, or primarily use heading
                             newSteps[idx].label = e.target.value;
                             setDraftData({ ...draftData, steps: newSteps });
                           }}
                           className="w-full font-bold text-slate-800 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                          placeholder="項目名..."
+                          placeholder="見出し..."
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-500 mb-1 block">視覚イメージ (Visual Description)</label>
+                        <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Content</label>
+                        <textarea
+                          value={step.content || ""}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                            const newSteps = [...(draftData.steps || [])];
+                            newSteps[idx].content = e.target.value;
+                            setDraftData({ ...draftData, steps: newSteps });
+                          }}
+                          className="w-full text-sm text-slate-700 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none resize-none h-16"
+                          placeholder="詳細な説明文..."
+                        />
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                        <label className="text-xs font-bold text-blue-600 mb-1 block uppercase flex items-center gap-1">
+                          <ImageIcon className="w-3 h-3" /> Visual Instruction
+                        </label>
                         <input
                           value={step.visual_desc}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -997,14 +1091,41 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                             newSteps[idx].visual_desc = e.target.value;
                             setDraftData({ ...draftData, steps: newSteps });
                           }}
-                          className="w-full text-sm text-slate-600 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                          placeholder="具体的な絵の指示..."
+                          className="w-full text-xs text-slate-600 p-2 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                          placeholder="具体的なイラスト指示・キャラポーズ..."
                         />
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
+
+              {/* FOOTER EDIT */}
+              {draftData.footer && (
+                <div className="bg-slate-800 text-white p-4 rounded-xl shadow-sm mt-6">
+                  <h4 className="font-bold text-xs uppercase tracking-wider mb-3 border-b border-slate-600 pb-1 text-slate-300">Footer</h4>
+                  <div className="space-y-3">
+                    <input
+                      value={draftData.footer.heading}
+                      onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, heading: e.target.value } })}
+                      className="w-full bg-slate-700 border-none text-white font-bold p-2 rounded focus:ring-2 focus:ring-blue-500"
+                      placeholder="フッター見出し..."
+                    />
+                    <input
+                      value={draftData.footer.content}
+                      onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, content: e.target.value } })}
+                      className="w-full bg-slate-700 border-none text-slate-300 text-sm p-2 rounded focus:ring-2 focus:ring-blue-500"
+                      placeholder="締めくくり..."
+                    />
+                    <input
+                      value={draftData.footer.visual_desc}
+                      onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, visual_desc: e.target.value } })}
+                      className="w-full bg-slate-700 border-none text-slate-400 text-xs p-2 rounded focus:ring-2 focus:ring-blue-500"
+                      placeholder="フッターの視覚指示..."
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* AI Update Section */}
@@ -1146,36 +1267,30 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                   <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <ImageIcon className="w-5 h-5 text-blue-500" /> デザインスタイルの選択
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto p-1">
+                  <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto p-1">
                     {Object.keys(STYLE_PROMPTS).map((styleName) => {
                       const meta = STYLE_ICONS[styleName] || { icon: '🎨', color: '#f0f0f0' };
-                      const previewClass = STYLE_PREVIEWS[styleName] || "bg-slate-100";
                       const isSelected = selectedStyle === styleName;
 
                       return (
                         <div
                           key={styleName}
                           onClick={() => setSelectedStyle(styleName)}
-                          className={`relative group cursor-pointer transition-all duration-200 rounded-xl overflow-hidden border-2 flex flex-col
-                            ${isSelected ? 'border-blue-600 shadow-md scale-[1.02]' : 'border-transparent hover:border-blue-200 hover:shadow-sm'}
+                          className={`aspect-square relative group cursor-pointer transition-all duration-200 rounded-xl border-2 flex flex-col items-center justify-center gap-2 p-2
+                            ${isSelected ? 'border-blue-600 bg-blue-50 shadow-md scale-[1.02]' : 'border-slate-100 bg-white hover:border-blue-200 hover:shadow-sm'}
                           `}
                         >
-                          {/* Visual Preview Area */}
-                          <div className={`h-20 w-full flex items-center justify-center ${previewClass} transition-opacity ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`}>
-                            <div className="bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm text-2xl">
-                              {meta.icon}
-                            </div>
+                          <div className="text-3xl filter drop-shadow-sm transform group-hover:scale-110 transition-transform">
+                            {meta.icon}
                           </div>
 
-                          {/* Label Area */}
-                          <div className={`p-2 text-xs font-bold text-center truncate w-full ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600'}`}>
+                          <div className={`text-[10px] sm:text-xs font-bold text-center leading-tight ${isSelected ? 'text-blue-700' : 'text-slate-600'}`}>
                             {styleName.split('(')[0]}
                           </div>
 
-                          {/* Check Indicator */}
                           {isSelected && (
-                            <div className="absolute top-1 right-1 bg-blue-600 text-white rounded-full p-0.5 shadow-sm">
-                              <Check className="w-3 h-3" />
+                            <div className="absolute top-1 right-1 text-blue-600">
+                              <Check className="w-4 h-4" />
                             </div>
                           )}
                         </div>
@@ -1253,7 +1368,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             {!finalImage ? (
               <>
                 <h2 className="text-xl font-bold text-slate-800 mb-4">04. デザインスタイル選択</h2>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
                   {Object.keys(STYLE_PROMPTS).map((styleName) => {
                     const meta = STYLE_ICONS[styleName];
                     const isSelected = selectedStyle === styleName;
@@ -1261,14 +1376,19 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                       <button
                         key={styleName}
                         onClick={() => setSelectedStyle(styleName)}
-                        className={`relative p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 text-center
-                                        ${isSelected ? 'border-blue-600 bg-blue-50/80 shadow-md transform scale-105' : 'border-slate-100 bg-white/60 hover:border-slate-300'}
+                        className={`aspect-square relative p-2 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center
+                                        ${isSelected ? 'border-blue-600 bg-blue-50 shadow-md transform scale-105' : 'border-slate-100 bg-white/60 hover:border-slate-300'}
                                     `}
                       >
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: meta.color }}>
+                        <div className="text-3xl filter drop-shadow-sm">
                           {meta.icon}
                         </div>
                         <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-800' : 'text-slate-600'}`}>{styleName.split('(')[0]}</span>
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 text-blue-600">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        )}
                       </button>
                     )
                   })}
@@ -1314,7 +1434,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                     <div className="flex gap-2">
                       <input
                         className="flex-1 border border-slate-200 rounded-lg p-2 text-sm"
-                        placeholder="例：もっと明るく、文字を大きく..."
+                        placeholder="例：パステルピンクと水色で優しい感じに、もっと文字を大きく..."
                         value={refineInst}
                         onChange={(e) => setRefineInst(e.target.value)}
                       />
