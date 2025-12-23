@@ -725,10 +725,10 @@ The user provided a reference image. Your goal is to **redraw the exact same ima
 **Strict Execution Rules:**
 1. **Layout & Composition:** Must match the reference image 100%. Don't change the scene.
 2. **Text Erasure:**
-   - **Speech Bubbles:** Fill them with **PURE SOLID WHITE**. Do not write anything inside.
-   - **Title Bars / Banners:** Keep the colored bar, but remove the letters. Make it a solid colored bar.
-   - **Labels:** Remove them completely.
-3. **Outcome:** The result should look like the "background layer" of the animation before text was added.
+   - **Speech Bubbles / Boxes:** **Keep the original background color** (whether white, yellow, or blue), but **ERASE the text** inside. Make it a solid colored shape.
+   - **Title Bars:** Maintain the bar's color but remove the title text.
+   - **Do not fill everything with white.** Only remove the letters.
+3. **Outcome:** A clean version of the image where all text has been "magically" deleted, leaving the colored boxes ready for new text.
 4. **Negative Constraint:** NO ALPHABET, NO KANJI, NO NUMBERS.
 `;
       }
