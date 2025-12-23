@@ -16,9 +16,13 @@ export async function POST(req: Request) {
         // Create a list of models to try.
         // User explicitly requested high-quality graphic models (nano-banana, gemini-3-pro).
         // We include "imagen-3.0-generate-001" as a reliable fallback for high-quality image generation.
+        // User Requirement: QUALITY FIRST.
+        // Only use high-quality image generation models. No low-quality fallbacks.
+        // We will retry the same high-quality model if it fails.
         const modelsToTry = [
             "imagen-3.0-generate-001",
-            "gemini-2.0-flash-exp"
+            "imagen-3.0-generate-001", // Retry 1
+            "imagen-3.0-generate-001"  // Retry 2
         ];
         // Note: Deprecated preview models (nano-banana, 3-pro-preview) caused 404 or text-only responses.
         // We stick to the official Imagen 3 and the reliable Gemini 2 Flash.
