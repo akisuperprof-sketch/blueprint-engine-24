@@ -717,19 +717,24 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
       // NO TEXT OVERRIDE
       if (isNoText) {
-        // Completely overwrite the prompt to remove text content interference
         promptToUse = `
-**TASK: CLEAN UP IMAGE (REMOVE TEXT)**
-The user provided a reference image. Your goal is to **redraw the exact same image** but **ERASE ALL TEXT**.
+**OPERATION: TEXT REMOVAL & BACKGROUND RESTORATION**
+Input is an infographic with text overlays.
+**GOAL:** Generate the **clean base illustration** with ALL TEXT REMOVED.
 
-**Strict Execution Rules:**
-1. **Layout & Composition:** Must match the reference image 100%. Don't change the scene.
-2. **Text Erasure:**
-   - **Speech Bubbles / Boxes:** **Keep the original background color** (whether white, yellow, or blue), but **ERASE the text** inside. Make it a solid colored shape.
-   - **Title Bars:** Maintain the bar's color but remove the title text.
-   - **Do not fill everything with white.** Only remove the letters.
-3. **Outcome:** A clean version of the image where all text has been "magically" deleted, leaving the colored boxes ready for new text.
-4. **Negative Constraint:** NO ALPHABET, NO KANJI, NO NUMBERS.
+**Specific Instructions:**
+1. **Treat all text as "Unwanted Objects":** Identify every letter, character, and number as an occlusion.
+2. **Action - Remove & Repair:** 
+   - Remove the text.
+   - **Repair the background** behind the text using context-aware fill (extend the background color/texture).
+3. **Preserve Containers:**
+   - **Keep** the speech bubbles, panels, and title boxes.
+   - **Empty them:** The containers must be purely solid color (e.g., if a bubble is white, keep it white but empty).
+4. **Strict Constraint:** The final output must contain **ZERO text**. 
+   - No gibberish, no squiggles.
+   - Just graphical shapes and characters.
+
+**Reference handling:** Use the provided image structure strictly, but ignore the pixel data of the text itself.
 `;
       }
 
