@@ -50,7 +50,7 @@ export async function POST(req: Request) {
                 // 画像生成は時間がかかるため、タイムアウトを90秒に設定
                 const generatePromise = model.generateContent(content);
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 90000)
+                    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 120000)
                 );
 
                 result = await Promise.race([generatePromise, timeoutPromise]) as any;
