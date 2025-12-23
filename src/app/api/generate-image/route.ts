@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         if (firstPart?.inlineData) {
             returnData = {
                 type: "image",
-                mimeType: firstPart.inlineData.mimeType,
+                mimeType: firstPart.inlineData.mimeType || "image/png",
                 data: firstPart.inlineData.data
             };
         } else if (firstPart?.text) {
@@ -141,7 +141,9 @@ export async function POST(req: Request) {
             }
 
             if (svgMatch) {
-                let svgCode = svgMatch[0];
+                let svgCode = svgMatch[0].trim();
+                // Remove any markdown code block artifacts if they leaked in
+                svgCode = svgCode.replace(/^```(xml|svg)?/, '').replace(/```$/, '').trim();
                 if (!svgCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
                     svgCode = svgCode.replace(/<svg/i, '<svg xmlns="http://www.w3.org/2000/svg"');
                 }
