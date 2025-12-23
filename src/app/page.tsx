@@ -719,20 +719,17 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
       if (isNoText) {
         // Completely overwrite the prompt to remove text content interference
         promptToUse = `
-**Role:** Background Artist / Material Creator
-**Goal:** Create a text-free background version of the provided reference image.
+**TASK: CLEAN UP IMAGE (REMOVE TEXT)**
+The user provided a reference image. Your goal is to **redraw the exact same image** but **ERASE ALL TEXT**.
 
-**Instructions:**
-1. **Trace the layout exactly** from the provided reference image.
-2. **REMOVE ALL TEXT.** Do not write a single character, letter, or number.
-3. Keep the speech bubbles, panels, and text boxes, but make them **EMPTY (BLANK)**.
-4. Maintain the same illustration style, colors, and character poses.
-5. The output must be a clean "background material" ready for text to be added in Photoshop.
-
-**Visual Guide:**
-- Speech bubbles: White and empty.
-- Title bars: Solid color and empty.
-- Panels: Detailed illustration but NO text labels.
+**Strict Execution Rules:**
+1. **Layout & Composition:** Must match the reference image 100%. Don't change the scene.
+2. **Text Erasure:**
+   - **Speech Bubbles:** Fill them with **PURE SOLID WHITE**. Do not write anything inside.
+   - **Title Bars / Banners:** Keep the colored bar, but remove the letters. Make it a solid colored bar.
+   - **Labels:** Remove them completely.
+3. **Outcome:** The result should look like the "background layer" of the animation before text was added.
+4. **Negative Constraint:** NO ALPHABET, NO KANJI, NO NUMBERS.
 `;
       }
 
