@@ -26,17 +26,18 @@ export async function POST(req: Request) {
         for (const modelName of modelsToTry) {
             try {
                 console.log(`Starting generation with model: ${modelName}, ratio: ${ratioConfig}`);
-                // generationConfig で aspectRatio を指定
+                // generationConfig から aspectRatio を削除し、プロンプトに含める（APIエラー回避のため）
                 const model = genAI.getGenerativeModel({
                     model: modelName,
                     generationConfig: {
                         temperature: 0.4,
-                        maxOutputTokens: 2048, // 画像生成には関係ない場合があるが念のため
-                        // @ts-ignore - SDKの型定義が追いついていない場合があるため
-                        aspectRatio: ratioConfig
+                        maxOutputTokens: 2048,
                     }
                 });
-                let content: any[] = [prompt];
+
+                // アスペクト比をプロンプトで指示
+                const ratioInstruction = `\n\n[IMPORTANT] Output Image Aspect Ratio: ${ratioConfig}`;
+                let content: any[] = [prompt + ratioInstruction];
 
                 if (refImages && Array.isArray(refImages)) {
                     refImages.forEach((img: any) => {

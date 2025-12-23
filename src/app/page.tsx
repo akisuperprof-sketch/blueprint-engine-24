@@ -485,15 +485,18 @@ original_prompt: ${finalPrompt}
 **Visual Style:** ${selectedStyle.split('(')[0]}
 ${styleP}
 
-**Content Requirements:**
+**Content Requirements (MUST INCLUDE ALL TEXT):**
 * **Title:** ${mainTitle}
 * **Language:** ${langInstruction}
-* **Structure:** Follow the 'Content Mapping' strictly.
 * **Character Role:** ${charInstruction}
+
+**Detailed Structure & Text Content:**
+${constructDraftPrompt()}
 
 **Technical Constraints:**
 * Output: High Fidelity, rich colors, professional finish.
 * Text: Must be legible, distinct from background.
+* Layout: Follow the provided DRAFT IMAGE strictly for composition.
 
 ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 `;
@@ -530,11 +533,10 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          // refImages: isRefine ? [] : (finalRefData
-          //   ? [{ data: finalRefData, mimeType: "image/jpeg" }]
-          //   : [])
-          // SPECIFICATION.md: Draft images are NOT sent as visual references during final rendering to save bandwidth and quota.
-          refImages: [],
+          refImages: isRefine ? [] : (finalRefData
+             ? [{ data: finalRefData, mimeType: "image/jpeg" }]
+            : []),
+          // Re-enabled draft image reference for better fidelity
           aspectRatio: aspectRatio
         })
       });
