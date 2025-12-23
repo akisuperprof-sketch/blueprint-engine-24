@@ -717,23 +717,31 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
       // NO TEXT OVERRIDE
       if (isNoText) {
+        const forbiddenKeywords = [
+          draftData.main_title,
+          ...(draftData.steps?.map((s: any) => s.title) || []),
+          draftData.summary
+        ].filter(Boolean).join('、');
+
         promptToUse = `
-**OPERATION: TEXT REMOVAL & BACKGROUND RESTORATION (文字消し・背景加工)**
-Input is an infographic with Japanese/English text overlays.
-**GOAL:** Generate a CLEAN BASE MATERIAL with all text removed. (文字を全て消した「空の背景素材」を作成してください)
+**[超重要指令: 画像内テキストの物理的消去]**
 
-**Instructions (指示):**
-1. **Remove all characters (文字の完全除去):** Identify and delete every letter, Kanji, Hiragana, Katakana, and number.
-2. **Action - Erase & Repair (消去と修復):** 
-   - 文字を完全に消し、背後の色やテクスチャで補完してください。
-   - **Keep Original Color (元の色を維持):** Speech bubbles (吹き出し) and title bars must keep their colors but be EMPTY (空白).
-   - **Do not make everything white (全てを白くしない):** If a box was blue, the resulting empty box must also be blue.
-3. **Outcome (結果):** A professional illustration "Base Layer" ready for a human to add new text via Photoshop.
-4. **Constraint (制約):** ZERO TEXT. No squiggles, no fake characters. (文字や文字に見える模様は一切入れないでください)
+あなたは熟練の画像編集者です。提供された参照画像から**「文字情報のみ」を完全に削除**し、背景素材を作成してください。
 
-**Reference:** Use the provided image structure strictly.
+**■ 削除対象（指名手配）:**
+以下の文言、およびそれに類するあらゆる文字（漢字・ひらがな・数字）を画像から消してください：
+「${forbiddenKeywords}」
+
+**■ 実行ルール:**
+1. **地の色で塗りつぶし:** 文字が描かれていた部分は、周囲の背景の色（白、青、黄色など）で均一に塗りつぶし、**「無地」**にしてください。
+2. **デザインの「枠」は残す:** 吹き出しの形、パネルの境界線、リボンの形状は維持してください。中身だけを空っぽにします。
+3. **フェイク文字の禁止:** 文字に見える「ぐにゃぐにゃした模様」や「ドット」も一切描き込まないでください。
+4. **アウトプット:** 人間が後からタイポグラフィを乗せるための、完璧にクリーンな「背景イラスト」を出力してください。
+
+これまでの指示はすべて忘れて、この「文字消しタスク」だけに集中してください。
 `;
       }
+
 
       const getDownscaledImage = async (dataUrl: string): Promise<string> => {
         return new Promise((resolve) => {
@@ -763,8 +771,8 @@ Input is an infographic with Japanese/English text overlays.
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          // For NoText mode, use Gemini 2.0 Flash as it follows "erase" instructions better than Pro
-          settings: isNoText ? { preferredModel: 'gemini-2.0-flash-exp' } : {},
+          // For NoText mode, use Gemini 1.5 Pro as it is better at strict negative instructions than Flash
+          settings: isNoText ? { preferredModel: 'gemini-1.5-pro-002' } : {},
           refImages: (isRefine && !isNoText) ? [] : (finalRefData // Only empty refImages if pure Refine (text edit). For NoText, we need ref.
             ? [{ data: finalRefData, mimeType: "image/jpeg" }]
             : []),
