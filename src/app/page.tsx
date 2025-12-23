@@ -251,11 +251,12 @@ export default function Home() {
 `;
     } else { // rich
       richnessReqs = `
-1. **Layout Style:** Use a **structured "Panel Layout"** (like a comic strip or instruction manual). Draw **clear rectangular borders** around each HEADER, BLOCK, and FOOTER.
-2. **Line Quality:** Use clean, confident black lines. Professional storyboard quality.
-3. **Visuals:** Draw detailed illustrations. Characters and objects must be highly recognizable with facial expressions and poses.
-4. **Text Area:** Leave clear whitespace inside each panel.
-5. **Goal:** High-fidelity, detailed blueprint ready for final production.
+1. **Art Style:** **High-End Commercial Storyboard Sketch**. Use sophisticated, dynamic ink lines with variation in line weight.
+2. **Detailing:** Add **hatching (shading lines)** to add depth and dimension. Use **motion lines** to show action.
+3. **Flow Indicators:** YOU MUST draw **curved arrows** or dotted lines connecting the blocks to strongly indicate the reading order and process flow.
+4. **Characters:** Draw characters with **clear, exaggerated gestures** (e.g., pointing, holding, explaining). Facial expressions must be detailed and distinct.
+5. **Layout:** Tightly composed "Panel Layout". Every block must have a clear frame.
+6. **Goal:** A professional-grade illustration that looks like a finished manga or architectural sketch.
 `;
     }
 
@@ -646,7 +647,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             <div
               key={s.id}
               onClick={() => isClickable && setPhase(s.id as any)}
-              className={`flex-1 text-center py-2 rounded-lg text-sm font-semibold transition-all
+              className={`flex-1 text-center py-2 rounded-lg text-[10px] sm:text-sm font-semibold transition-all
                 ${isActive ? 'shadow-md' : ''}
                 ${isClickable ? 'cursor-pointer hover:bg-slate-100 text-slate-600' : isActive ? '' : 'text-slate-300 cursor-not-allowed'}`}
               style={{
@@ -674,7 +675,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             <button onClick={() => setPhase('input')} className="flex items-center justify-center hover:opacity-80 transition-opacity">
               <Image src="/logo.png" alt="Blueprint Engine Logo" width={200} height={50} className="h-10 w-auto object-contain" />
             </button>
-            <button onClick={() => setPhase('input')} className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent animate-text-shimmer hover:opacity-80 transition-opacity">
+            <button onClick={() => setPhase('input')} className="font-bold text-lg md:text-xl tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent animate-text-shimmer hover:opacity-80 transition-opacity">
               ブループリントエンジン24
             </button>
           </div>
@@ -1026,16 +1027,16 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               </h3>
               <div className="flex bg-white rounded-xl border border-slate-200 p-1">
                 {[
-                  { id: 'simple', label: 'シンプル (Simple)', desc: '構成確認用のラフな線画。スピード重視。' },
-                  { id: 'normal', label: '標準 (Normal)', desc: '一般的な下書き。バランス重視。' },
-                  { id: 'rich', label: 'リッチ (Rich)', desc: 'プロの絵コンテ風。表情やポーズまで詳細に描画。' },
+                  { id: 'simple', label: 'シンプル', desc: '構成確認用のラフな線画。スピード重視。' },
+                  { id: 'normal', label: '標準', desc: '一般的な下書き。バランス重視。' },
+                  { id: 'rich', label: 'リッチ', desc: 'プロの絵コンテ風。表情やポーズまで詳細に描画。' },
                 ].map((mode) => {
                   const isSelected = draftRichness === mode.id;
                   return (
                     <button
                       key={mode.id}
                       onClick={() => setDraftRichness(mode.id as any)}
-                      className={`flex-1 py-3 px-2 rounded-lg text-sm font-bold transition-all relative group
+                      className={`flex-1 py-3 px-1 sm:px-2 rounded-lg text-xs sm:text-sm font-bold transition-all relative group
                         ${isSelected
                           ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200'
                           : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
@@ -1059,7 +1060,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                 <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">Option</span> 画像サイズを選択
               </h3>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { id: "1:1", label: "正方形 (1:1)", icon: <div className="w-4 h-4 border-2 border-current rounded-sm" /> },
                   { id: "3:4", label: "A4縦 (3:4)", icon: <div className="w-3 h-5 border-2 border-current rounded-sm" /> },
@@ -1555,7 +1556,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             {!finalImage ? (
               <>
                 <h2 className="text-xl font-bold text-slate-800 mb-4">04. デザインスタイル選択</h2>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {Object.keys(STYLE_PROMPTS).map((styleName) => {
                     const meta = STYLE_ICONS[styleName];
                     const isSelected = selectedStyle === styleName;
