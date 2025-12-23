@@ -14,8 +14,8 @@ export async function POST(req: Request) {
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
         // 優先順位: 1. nano (指定) -> 2. 2.0-flash (最新) -> 3. 1.5-flash (安定)
-        // 有料キーでも nano が制限される環境があるため、確実なフォールバックを組みます。
-        const modelsToTry = ["nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
+        // 優先順位: 1. User Request (3-pro) -> 2. Nano Banana -> 3. 2.0-flash -> 4. 1.5-pro -> 5. 1.5-flash
+        const modelsToTry = ["gemini-3-pro-image-preview", "nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
 
         let lastError = "";
         let result = null;

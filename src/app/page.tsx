@@ -735,31 +735,94 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
               </button>
 
               {isDetailsOpen && (
-                <div className="mt-3 p-4 bg-white rounded-lg border border-slate-100 text-slate-600 space-y-4 text-sm leading-relaxed animate-in fade-in zoom-in-95 duration-200">
-                  <p>
-                    <span className="font-bold text-slate-800">Blueprint Engine</span> は、ビジネス文脈で求められる「構造化・図解・体系化」を自動で行う生成ツールです。
-                    入力されたメモや資料から、最適な設計図を瞬時に生成します。
-                  </p>
+                <div className="mt-3 p-5 bg-white rounded-lg border border-slate-100 text-slate-600 space-y-6 text-sm leading-relaxed animate-in fade-in zoom-in-95 duration-200">
+                  {/* Section 1: Why Needed */}
+                  <section>
+                    <h3 className="font-bold text-slate-800 text-lg mb-2 flex items-center gap-2">
+                      なぜ今、図解ツールが必要なのか
+                    </h3>
+                    <p className="mb-2 text-xs text-slate-400">ここ、けっこう大事な話なんですけど...</p>
+                    <div className="space-y-3">
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <strong className="block text-slate-800 mb-1">● 情報過多の時代に「一瞬で伝わる」が武器になる</strong>
+                        <p>文字だけの情報って、正直スルーされちゃいません？私もタイムライン流し見してるとき、文字びっしりの投稿はスーッと通り過ぎちゃいます。でも図解があると、手が止まるんですよね。「お、なんかわかりやすそう」って。</p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <strong className="block text-slate-800 mb-1">● デザイナーさんに頼むと高い問題</strong>
+                        <p>これ、地味にキツくないですか？インフォグラフィック1枚で5,000円〜数万円。週に3本コンテンツ出すなら、月に6万円以上... 私も最初は外注してたんですけど、「これ、自分で作れたらなあ」ってずっと思ってました。</p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <strong className="block text-slate-800 mb-1">● アイデアは鮮度が命</strong>
+                        <p>「今これ思いついた！」ってときに、「来週デザイン上がります」じゃ遅いんですよね。そのときの熱量で出したいじゃないですか。結局、自分で作れる人が最強の時代になったんです。</p>
+                      </div>
+                    </div>
+                  </section>
 
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 my-3">
-                    <p className="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">主な活用事例</p>
-                    <ul className="grid sm:grid-cols-2 gap-2 text-xs">
-                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div> <strong>新規事業スキーム:</strong> ビジネスモデルの可視化</li>
-                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div> <strong>業務フロー:</strong> マニュアルや工程の整理</li>
-                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div> <strong>学習ロードマップ:</strong> 成長ステップの体系化</li>
-                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div> <strong>組織図・相関図:</strong> 関係性の明確化</li>
-                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-400 rounded-full"></div> <strong>KPIツリー:</strong> 目標達成要因の構造分解</li>
-                      <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> <strong>概念実証 (PoC):</strong> アイデアの具体化</li>
+                  {/* Section 2: Mechanism */}
+                  <section>
+                    <h3 className="font-bold text-slate-800 text-lg mb-2 mt-2 text-indigo-700">
+                      3. ここがヤバい！3ステップ生成の仕組み
+                    </h3>
+                    <p className="mb-3">
+                      このツールの最大の特徴... <strong className="marker:text-red-500 text-red-500 font-bold">いきなり完成画像を作らない</strong>んです。
+                      「え、それ遠回りじゃない？」って思うかもしれないんですけど、これがミソで。プロのデザイナーさんって、いきなり色塗り始めないですよね？まず構成考えて、ラフ描いて、それから仕上げる。その流れをAIが再現してるんです。
+                    </p>
+
+                    <div className="space-y-4 pl-2 border-l-2 border-slate-200 ml-1">
+                      <div>
+                        <h4 className="font-bold text-slate-800">■ Step 1: 構造化 (Structure)</h4>
+                        <p className="text-xs mt-1">
+                          最新の言語モデル <code>gemini-3-pro-preview</code> が、入力されたテキストを読み解きます。
+                          <br />
+                          ここがすごいのは、<strong>「これは比較図がいいな」「タイムラインで見せよう」みたいな判断を、AIが勝手にやってくれる</strong>んです。
+                          もちろん手動で変えることもできます。
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          (対応: 比較・対比 / プロセス・手順 / 年表・タイムライン / 階層・ピラミッド / 循環・サイクル / マインドマップ / マトリックス / 解剖図)
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800">■ Step 2: ラフスケッチ (Draft)</h4>
+                        <p className="text-xs mt-1">
+                          次に、画像モデル <code>Nano Banana Pro (gemini-3-pro-image-preview)</code> が、白黒のラフ画を描きます。
+                          <br />
+                          「この配置でいい？」って確認できるから、失敗がないんですよね。今は「もうちょい左」とか「要素増やして」とか、この段階で調整できるから本当に助かってます。
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800">■ Step 3: 仕上げ (Final Design)</h4>
+                        <p className="text-xs mt-1">
+                          最後に、選んだスタイルで色塗って、ディテール描き込んで完成！30秒〜1分で出てきます。正直、最初見たときシビれましたね...
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Section 3: Styles */}
+                  <section>
+                    <h3 className="font-bold text-slate-800 text-lg mb-3 mt-4 text-pink-600">
+                      4. 選べるデザインスタイル13種類
+                    </h3>
+                    <p className="mb-3">今の気分とか、使う場所に合わせて、いろんなスタイルが選べます！</p>
+                    <ul className="grid grid-cols-2 gap-2 text-xs">
+                      <li><span className="font-bold">・ビジネス・プロ</span> → プレゼン資料に信頼感</li>
+                      <li><span className="font-bold">・ポップ・インフォ</span> → 鮮やかで視認性抜群</li>
+                      <li><span className="font-bold">・手書きスケッチ</span> → 親しみやすいホワイトボード風</li>
+                      <li><span className="font-bold">・ミニマリスト</span> → シンプルイズベスト</li>
+                      <li><span className="font-bold">・3Dアイソメトリック</span> → 箱庭っぽくて可愛い</li>
+                      <li><span className="font-bold">・サイバーパンク</span> → ネオンでかっこいい</li>
+                      <li><span className="font-bold">・漫画風</span> → インパクト重視</li>
+                      <li><span className="font-bold">・クレイアニメ風</span> → 粘土っぽい温かみ</li>
+                      <li><span className="font-bold">・レトロゲーム風</span> → ドット絵テイスト</li>
+                      <li><span className="font-bold">・水彩画風</span> → アートっぽい質感</li>
+                      <li><span className="font-bold">・切り絵風</span> → 和のテイスト</li>
+                      <li><span className="font-bold">・黒板アート風</span> → 教育系に最適</li>
+                      <li><span className="font-bold">・ネオンガラス風</span> → モダンで洗練された感じ</li>
                     </ul>
-                  </div>
-
-                  <p>
-                    シンプルな指示だけで、「論理が一貫した美しいインフォグラフィック」が整い、そのまま提案資料や共有ドキュメントとして活用できます。
-                  </p>
-                  <p>
-                    「説明が伝わらない」「考えを整理する時間がない」「資料作成に時間が取られる」
-                    そんな課題を解消し、あなたの知的生産性を最大化します。
-                  </p>
+                    <p className="mt-3 text-xs bg-pink-50 text-pink-700 p-2 rounded">
+                      💡 さらに、色味とか雰囲気も自然言語で「パステルピンクと水色で優しい感じに」とか伝えるだけでOKです！
+                    </p>
+                  </section>
                 </div>
               )}
             </div>

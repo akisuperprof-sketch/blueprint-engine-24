@@ -13,32 +13,48 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // --- Primary Model Call ---
+        // Requested priority: 3-pro (user wish) -> 2.0-flash (best exp) -> 1.5-pro (capable) -> 1.5-flash (stable/fast)
+        const modelsToTry = ["gemini-3-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
+
+        let lastError = "";
         let text = "";
-        try {
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-            let content: any[] = [prompt];
-            if (image && mimeType) {
-                content.push({ inlineData: { data: image, mimeType: mimeType } });
-            }
-            const result = await model.generateContent(content);
-            const response = await result.response;
-            text = response.text();
-        } catch (primaryError: any) {
-            console.error("Primary text model failed, trying fallback:", primaryError.message);
-            // --- Fallback Model Call (Gemini 1.5 Flash is more stable and has higher quota) ---
-            if (primaryError.message.toLowerCase().includes('quota') || primaryError.message.toLowerCase().includes('429') || primaryError.message.toLowerCase().includes('exhausted')) {
-                const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        for (const modelName of modelsToTry) {
+            try {
+                console.log(`[Text] Starting generation with model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+
                 let content: any[] = [prompt];
                 if (image && mimeType) {
                     content.push({ inlineData: { data: image, mimeType: mimeType } });
                 }
-                const result = await fallbackModel.generateContent(content);
+
+                // 20s timeout for text
+                const generatePromise = model.generateContent(content);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 30000)
+                );
+
+                const result = await Promise.race([generatePromise, timeoutPromise]) as any;
                 const response = await result.response;
                 text = response.text();
-            } else {
-                throw primaryError;
+
+                if (text) {
+                    console.log(`[Text] Success with model: ${modelName}`);
+                    break;
+                }
+            } catch (e: any) {
+                lastError = e.message;
+                console.warn(`[Text] Model ${modelName} failed:`, lastError);
+
+                // If quota or not found, continue. If severe, maybe stop? For now, continue on all errors to be safe.
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
             }
+        }
+
+        if (!text) {
+            throw new Error(`All text models failed. Last error: ${lastError}`);
         }
 
         return NextResponse.json({ text });

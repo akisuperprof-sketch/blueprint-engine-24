@@ -65,26 +65,38 @@
     *   Draft images are **NOT** sent as visual references during final rendering to save bandwidth and quota.
     *   Detailed text prompts are used exclusively to ensure structural adherence.
 *   **Server-Side Fallback & Retry:**
-    *   **Fallback Chain:** `nano-banana-pro-preview` -> `gemini-2.0-flash-exp` -> `gemini-1.5-pro` -> `gemini-1.5-flash`.
+    *   **Text Model Priority:** `gemini-3-pro-preview` -> `gemini-2.0-flash-exp` -> `gemini-1.5-pro` -> `gemini-1.5-flash`
+    *   **Image Model Priority:** `gemini-3-pro-image-preview` -> `nano-banana-pro-preview` -> `gemini-2.0-flash-exp` -> `1.5-pro` -> `1.5-flash`
     *   **Retry Delay:** Automatic 2-second interval before retrying after a "Quota Exceeded (429)" error.
 
 ### 3.10. Settings & API Management
 *   **Persistence:** Personal API keys are saved in `localStorage`.
-*   **Status Indicator:** Settings modal displays:
-    *   Current key status (Shared vs Personal).
-    *   **Last 4 digits** of the applied personal key for user verification.
-*   **Clearance:** Warning displayed when using the shared (limited) fallback key.
+*   **Status Indicator:** Settings modal displays key status and last 4 digits.
+*   **Storage Error Handling:** Automatically handles `QuotaExceededError` for LocalStorage by removing oldest history items to ensure successful saving.
 
 ### 4. Expansion of Contents
 *   **New Archetypes:** `マトリックス (4象限 / 2x2分析)`.
-*   **New Styles:** `黒板アート (Blackboard Art)`.
-*   **Style Previews:** Grid-based selection UI with visual gradients for intuitive choices.
-*   **Character Role:** Selection between "General Use" and "Narrator Role" for reference images.
-*   **Input Tips:** "💡 入力のコツ" section added to guide high-quality text input.
+*   **New Styles:** `切り絵風 (Paper Cutout)`, `ネオンガラス風 (Neon Glass)`.
+*   **Marketing Copy:** Updated "Detailed Feature Introduction" with fresh, user-provided marketing text.
 
-## 直近の変更履歴 (2025-12-19)
+## 直近の変更履歴 (2025-12-23)
 
-### Phase 1: 機能拡張とUI/UX改善
+### Phase 3: 最終調整と品質向上 (Final Optimization)
+7.  **モデルエンジンの刷新:**
+    *   **テキスト解析:** `gemini-3-pro-preview` を最優先モデルとして採用。
+    *   **画像生成:** `gemini-3-pro-image-preview` をドラフト・清書の両方で優先採用。
+8.  **API制限 (Quota) 対策の完遂:**
+    *   Step 4（清書）でドラフト画像のリファレンス送信を廃止（トークン消費を大幅削減）。
+    *   アップロード画像のサイズ(512px)・画質(0.5)をさらに軽量化。
+    *   フォールバックチェーンに `gemini-1.5-pro` を追加し、リトライ待機時間を2秒に延長。
+9.  **LocalStorage容量エラーへの対応:**
+    *   ブラウザの保存容量不足（QuotaExceededError）発生時に、古い履歴を自動削除して保存を試みるロジックを実装。
+    *   APIエラーと保存容量エラーを明確に区別してユーザーに通知。
+10. **コンテンツの拡充:**
+    *   新スタイル追加: 「切り絵風」「ネオンガラス風」（全13種類）。
+    *   トップページの詳細説明文を、より訴求力の高いマーケティングテキストに刷新。
+
+### Phase 1: 機能拡張とUI/UX改善 (Archive)
 1.  **新機能追加:**
     *   「マトリックス (4象限 / 2x2分析)」構造の追加
     *   新スタイル「黒板アート (Blackboard Art)」の追加

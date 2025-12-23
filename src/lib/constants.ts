@@ -52,9 +52,17 @@ export const STYLE_PROMPTS: Record<string, string> = {
     Features: Soft color bleeding, textured paper background, artistic brush strokes.
     Vibe: Organic, artistic, gentle, hand-painted.`,
 
+    "切り絵風 (Paper Cutout)": `Style: Japanese Kirie / Paper Cutout Art.
+    Features: Sharp vector-like edges, layered paper depth effect, high contrast, traditional Japanese colors (vermilion, indigo, gold).
+    Vibe: Artistic, traditional, elegant, handcrafted.`,
+
     "黒板アート (Blackboard Art)": `Style: Chalkboard Drawing.
     Features: Detailed chalk textures, green or black chalkboard background, hand-drawn diagrams, multi-colored chalk.
-    Vibe: Educational, nostalgic, creative, handmade effect.`
+    Vibe: Educational, nostalgic, creative, handmade effect.`,
+
+    "ネオンガラス (Neon Glass)": `Style: Glassmorphism & Neon.
+    Features: Translucent frosted glass elements, glowing neon edges, dark blurry background, vivid gradients.
+    Vibe: Modern, sophisticated, premium, high-end tech.`
 };
 
 
@@ -69,19 +77,23 @@ export const STYLE_ICONS: Record<string, { icon: string, color: string }> = {
     "クレイアニメ (Clay Anime)": { "icon": "🧸", "color": "#FFEDD5" },
     "レトロゲーム (Retro Game)": { "icon": "🕹️", "color": "#DCFCE7" },
     "水彩画アート (Watercolor Art)": { "icon": "🎨", "color": "#FEF9C3" },
-    "黒板アート (Blackboard Art)": { "icon": "🏫", "color": "#D1FAE5" }
+    "切り絵風 (Paper Cutout)": { "icon": "✂️", "color": "#FECACA" },
+    "黒板アート (Blackboard Art)": { "icon": "🏫", "color": "#D1FAE5" },
+    "ネオンガラス (Neon Glass)": { "icon": "🍸", "color": "#E0E7FF" }
 };
 
 export const STYLE_PREVIEWS: Record<string, string> = {
-    "ビジネス・プロ (Business Pro)": "bg-gradient-to-br from-slate-800 to-blue-900 border border-blue-400", // Navy for trust
-    "ポップ・インフォ (Pop Info)": "bg-gradient-to-br from-yellow-300 via-orange-400 to-red-500", // Vibrant
+    "ビジネス・プロ (Business Pro)": "bg-gradient-to-br from-slate-800 to-blue-900 border border-blue-400",
+    "ポップ・インフォ (Pop Info)": "bg-gradient-to-br from-yellow-300 via-orange-400 to-red-500",
     "手書きスケッチ (Hand-drawn Sketch)": "bg-[#fffbeb] border-2 border-dashed border-slate-400",
     "ミニマリスト (Minimalist)": "bg-white border border-slate-200 shadow-sm",
     "3Dアイソメトリック (3D Isometric)": "bg-gradient-to-br from-indigo-100 to-purple-200 border-b-4 border-indigo-300",
-    "サイバーパンク (Cyberpunk)": "bg-slate-950 border border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]", // Darker + more neon
+    "サイバーパンク (Cyberpunk)": "bg-slate-950 border border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]",
     "コミック/漫画 (Comic/Manga)": "bg-white border-2 border-black bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:6px_6px]",
     "クレイアニメ (Clay Anime)": "bg-gradient-to-br from-orange-100 to-amber-200 rounded-xl border-4 border-white shadow-inner",
     "レトロゲーム (Retro Game)": "bg-slate-800 border-4 border-green-500",
     "水彩画アート (Watercolor Art)": "bg-gradient-to-br from-pink-100 via-purple-100 to-indigo-100 opacity-90",
-    "黒板アート (Blackboard Art)": "bg-emerald-900 border-4 border-amber-900 [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:20px_20px]"
+    "切り絵風 (Paper Cutout)": "bg-red-50 border-4 border-red-200 shadow-sm",
+    "黒板アート (Blackboard Art)": "bg-emerald-900 border-4 border-amber-900 [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:20px_20px]",
+    "ネオンガラス (Neon Glass)": "bg-slate-900 border border-white/20 backdrop-blur-md shadow-[0_0_20px_rgba(255,255,255,0.2)]"
 };
