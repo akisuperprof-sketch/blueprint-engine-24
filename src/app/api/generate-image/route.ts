@@ -16,13 +16,13 @@ export async function POST(req: Request) {
         // Create a list of models to try.
         // User explicitly requested high-quality graphic models (nano-banana, gemini-3-pro).
         // We include "imagen-3.0-generate-001" as a reliable fallback for high-quality image generation.
-        // User Requirement: QUALITY FIRST, but Imagen 3 API is currently unavailable (404).
-        // Switching to "gemini-2.0-flash-exp" which is the highest quality GENERATIVE model currently accessible via this API.
-        // We will retry multiple times to ensure success.
+        // User insists they have access to these models. We will try them.
+        // If 404, we will log available models to debug.
         const modelsToTry = [
-            "gemini-2.0-flash-exp",
-            "gemini-2.0-flash-exp",
-            "gemini-2.0-flash-exp"
+            "imagen-3.0-generate-001",
+            "gemini-3-pro-image-preview",   // User feedback
+            "nano-banana-pro-preview",      // User feedback
+            "gemini-2.0-flash-exp"          // Reliable fallback
         ];
         // Note: Deprecated preview models (nano-banana, 3-pro-preview) caused 404 or text-only responses.
         // We stick to the official Imagen 3 and the reliable Gemini 2 Flash.
@@ -106,7 +106,24 @@ export async function POST(req: Request) {
 
                 // 制限エラー (429/Quota) または モデル不在 (404) の場合は次のモデルへ
                 if (lastError.includes('quota') || lastError.includes('429') || lastError.includes('not found')) {
-                    // 連続リクエストによるスパム判定を避けるため2秒待機 (SPECIFICATION.md: Retry Delay 2s)
+                    // DEBUG: If model not found, try to list available models to verify exact name
+                    if (lastError.includes('not found')) {
+                        try {
+                            console.log("DEBUG: Model not found. Listing available models...");
+                            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${finalApiKey}&pageSize=100`);
+                            const listData = await listRes.json();
+                            const availableModels = listData.models?.map((m: any) => m.name) || [];
+                            console.log("DEBUG: Available models:", availableModels);
+
+                            // Check for likely candidates
+                            const candidates = availableModels.filter((n: string) => n.includes('nano') || n.includes('banana') || n.includes('imagen') || n.includes('gemini'));
+                            lastError += ` \n(Available: ${candidates.join(', ') || 'None matching keywords'})`;
+                        } catch (debugErr) {
+                            console.error("DEBUG: Failed to list models", debugErr);
+                        }
+                    }
+
+                    // 連続リクエストによるスパム判定を避けるためwait
                     await new Promise(r => setTimeout(r, 2000));
                     continue;
                 } else {
