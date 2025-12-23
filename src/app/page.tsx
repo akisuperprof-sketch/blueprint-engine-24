@@ -63,10 +63,15 @@ export default function Home() {
 
   // Text Edit Mode State
   const [isTextEditMode, setIsTextEditMode] = useState(false);
-  const [textLayers, setTextLayers] = useState<{ id: string, x: number, y: number, text: string }[]>([]);
+  const [textLayers, setTextLayers] = useState<{ id: string, x: number, y: number, text: string, bgColor: string, fontSize: number }[]>([]);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+
+  // Drag State
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number, y: number } | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   // Step 2 Extended (Draft Prompt Edit)
   const [isDraftPromptEditOpen, setDraftPromptEditOpen] = useState(false);
@@ -496,9 +501,11 @@ ${stepsStr}
   const addTextLayer = () => {
     const newLayer = {
       id: Date.now().toString(),
-      x: 50, // Default percent X
-      y: 50, // Default percent Y
-      text: "テキストを入力"
+      x: 50,
+      y: 50,
+      text: "テキスト",
+      bgColor: "#ffffff",
+      fontSize: 24
     };
     setTextLayers([...textLayers, newLayer]);
     setSelectedTextId(newLayer.id);
@@ -512,6 +519,72 @@ ${stepsStr}
     setTextLayers(layers => layers.filter(l => l.id !== id));
     if (selectedTextId === id) setSelectedTextId(null);
   };
+
+  // Drag Handlers
+  const handlePointerDown = (e: React.PointerEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedTextId(id);
+    setIsDragging(true);
+    // @ts-ignore
+    e.target.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent, id: string) => {
+    if (!isDragging || selectedTextId !== id || !editorRef.current) return;
+
+    const rect = editorRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // Clamp
+    const clampedX = Math.max(0, Math.min(100, x));
+    const clampedY = Math.max(0, Math.min(100, y));
+
+    updateTextLayer(id, { x: clampedX, y: clampedY });
+  };
+
+  // Helper: Pick color from image at position (x%, y%)
+  const pickColorFromImage = (xPercent: number, yPercent: number): string | null => {
+    if (!imageRef.current) return null;
+    const img = imageRef.current;
+
+    // Create a temporary canvas to read pixel data
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.drawImage(img, 0, 0);
+
+    const pixelX = Math.floor((xPercent / 100) * canvas.width);
+    const pixelY = Math.floor((yPercent / 100) * canvas.height);
+
+    const data = ctx.getImageData(pixelX, pixelY, 1, 1).data;
+    // Convert to Hex
+    const hex = "#" + ((1 << 24) + (data[0] << 16) + (data[1] << 8) + (data[2])).toString(16).slice(1);
+    return hex;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    // If we were dragging, auto-update the background color to match the new position
+    if (isDragging && selectedTextId) {
+      const layer = textLayers.find(l => l.id === selectedTextId);
+      if (layer) {
+        // Auto-pick color from the center of the text box
+        const newColor = pickColorFromImage(layer.x, layer.y);
+        if (newColor) {
+          updateTextLayer(layer.id, { bgColor: newColor });
+        }
+      }
+    }
+
+    setIsDragging(false);
+    // @ts-ignore
+    e.target.releasePointerCapture(e.pointerId);
+  };
+
 
   const saveEditedImage = async () => {
     if (!finalImage || !imageRef.current) return;
@@ -531,23 +604,24 @@ ${stepsStr}
       const x = (layer.x / 100) * canvas.width;
       const y = (layer.y / 100) * canvas.height;
 
-      // Background Box
-      ctx.font = "bold 24px sans-serif"; // Base size, adjust scaling?
-      // For better quality, we might need dynamic scaling based on image size. 
-      // detailed implementation below.
+      // Calculate dynamic font size based on original image size vs display logic
+      // Here we use the stored fontSize (which is relative to a standard view)
+      // Let's assume the fontSize state is "display pixels" on a roughly 800px wide canvas.
+      // We skip complex scaling for now and trust the user to eyeball it.
+      const scale = canvas.width / 800; // rough heuristic
+      const renderFontSize = (layer.fontSize || 24) * scale;
 
-      const fontSize = Math.max(24, canvas.width / 40);
-      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.font = `bold ${renderFontSize}px sans-serif`;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
 
       const metrics = ctx.measureText(layer.text);
-      const padding = fontSize * 0.6;
+      const padding = renderFontSize * 0.6;
       const boxWidth = metrics.width + padding;
-      const boxHeight = fontSize * 1.5;
+      const boxHeight = renderFontSize * 1.5;
 
-      // Draw white background to hide original text
-      ctx.fillStyle = "#ffffff";
+      // Draw background
+      ctx.fillStyle = layer.bgColor || "#ffffff";
       ctx.fillRect(x - boxWidth / 2, y - boxHeight / 2, boxWidth, boxHeight);
 
       // Draw Text
@@ -1697,11 +1771,14 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                           </div>
 
                           {/* EDITOR CANVAS AREA */}
-                          <div className="relative w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-300">
+                          <div
+                            ref={editorRef}
+                            className="relative w-full bg-slate-200 rounded-lg overflow-hidden border border-slate-300 select-none touch-none"
+                          >
                             <img
                               ref={imageRef}
                               src={finalImage}
-                              className="w-full h-auto block select-none"
+                              className="w-full h-auto pointer-events-none"
                               alt="Editing Target"
                             />
 
@@ -1709,17 +1786,28 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                             {textLayers.map(layer => (
                               <div
                                 key={layer.id}
-                                onClick={() => setSelectedTextId(layer.id)}
-                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-move group
-                                  ${selectedTextId === layer.id ? 'z-20' : 'z-10'}
+                                onPointerDown={(e) => handlePointerDown(e, layer.id)}
+                                onPointerMove={(e) => handlePointerMove(e, layer.id)}
+                                onPointerUp={handlePointerUp}
+                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-move
+                                  ${selectedTextId === layer.id ? 'z-50' : 'z-10'}
                                `}
                                 style={{ left: `${layer.x}%`, top: `${layer.y}%` }}
                               >
-                                {/* Text Box Style: White bg, black text, shadow */}
-                                <div className={`bg-white text-black px-2 py-1 rounded shadow-md border 
-                                  ${selectedTextId === layer.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-300'}
-                               `}>
-                                  <span className="text-sm font-bold whitespace-nowrap select-none pointer-events-none">
+                                {/* Text Box */}
+                                <div
+                                  className={`px-3 py-1.5 rounded shadow-sm border
+                                    ${selectedTextId === layer.id
+                                      ? 'border-blue-500 ring-2 ring-blue-200 shadow-xl'
+                                      : 'border-transparent hover:border-slate-300'
+                                    }
+                                 `}
+                                  style={{ backgroundColor: layer.bgColor || '#ffffff' }}
+                                >
+                                  <span
+                                    className="font-bold text-black whitespace-nowrap pointer-events-none block"
+                                    style={{ fontSize: layer.fontSize ? `${layer.fontSize}px` : '24px' }}
+                                  >
                                     {layer.text}
                                   </span>
                                 </div>
@@ -1732,59 +1820,80 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                             <div className="flex gap-2 mb-4">
                               <button
                                 onClick={addTextLayer}
-                                className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm"
+                                className="flex-1 py-3 bg-white border border-dashed border-slate-300 hover:border-blue-400 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50 shadow-sm transition-all"
                               >
-                                + テキスト追加
+                                + テキストを追加
                               </button>
                             </div>
 
                             {selectedTextId ? (
-                              <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                                 {(() => {
                                   const layer = textLayers.find(l => l.id === selectedTextId);
                                   if (!layer) return null;
                                   return (
                                     <>
-                                      <div>
-                                        <label className="text-xs font-bold text-slate-500 mb-1 block">テキスト内容</label>
-                                        <input
-                                          value={layer.text}
-                                          onChange={(e) => updateTextLayer(layer.id, { text: e.target.value })}
-                                          className="w-full p-2 border border-slate-300 rounded text-sm"
-                                        />
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <label className="text-xs font-bold text-slate-500 mb-1 block">横位置 (X)</label>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500 block">テキスト内容</label>
                                           <input
-                                            type="range" min="0" max="100"
-                                            value={layer.x}
-                                            onChange={(e) => updateTextLayer(layer.id, { x: parseInt(e.target.value) })}
-                                            className="w-full"
+                                            value={layer.text}
+                                            onChange={(e) => updateTextLayer(layer.id, { text: e.target.value })}
+                                            className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                           />
                                         </div>
-                                        <div>
-                                          <label className="text-xs font-bold text-slate-500 mb-1 block">縦位置 (Y)</label>
-                                          <input
-                                            type="range" min="0" max="100"
-                                            value={layer.y}
-                                            onChange={(e) => updateTextLayer(layer.id, { y: parseInt(e.target.value) })}
-                                            className="w-full"
-                                          />
+                                        <div className="space-y-2">
+                                          <label className="text-xs font-bold text-slate-500 block">背景色 (文字化けを隠す色)</label>
+                                          <div className="flex gap-2 items-center">
+                                            <input
+                                              type="color"
+                                              value={layer.bgColor || "#ffffff"}
+                                              onChange={(e) => updateTextLayer(layer.id, { bgColor: e.target.value })}
+                                              className="h-9 w-12 rounded cursor-pointer border border-slate-200 p-0.5 bg-white"
+                                            />
+                                            <span className="text-xs text-slate-400 font-mono">{layer.bgColor}</span>
+                                            <button
+                                              onClick={() => {
+                                                const c = pickColorFromImage(layer.x, layer.y);
+                                                if (c) updateTextLayer(layer.id, { bgColor: c });
+                                              }}
+                                              className="ml-2 px-2 py-1 bg-slate-100 text-xs border border-slate-300 rounded hover:bg-slate-200"
+                                              title="背景色を自動取得"
+                                            >
+                                              📍自動取得
+                                            </button>
+                                          </div>
                                         </div>
                                       </div>
-                                      <button
-                                        onClick={() => removeTextLayer(layer.id)}
-                                        className="w-full py-2 bg-red-50 text-red-600 rounded text-xs font-bold hover:bg-red-100"
-                                      >
-                                        削除
-                                      </button>
+
+                                      {/* Position & Size */}
+                                      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                                        <div>
+                                          <label className="text-xs font-bold text-slate-500 mb-1 block">文字サイズ</label>
+                                          <input
+                                            type="range" min="10" max="100"
+                                            value={layer.fontSize}
+                                            onChange={(e) => updateTextLayer(layer.id, { fontSize: parseInt(e.target.value) })}
+                                            className="w-full accent-blue-600"
+                                          />
+                                        </div>
+                                        <div className="flex items-end justify-end">
+                                          <button
+                                            onClick={() => removeTextLayer(layer.id)}
+                                            className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 border border-red-100 transition-colors w-full md:w-auto"
+                                          >
+                                            🗑 削除
+                                          </button>
+                                        </div>
+                                      </div>
                                     </>
                                   )
                                 })()}
                               </div>
                             ) : (
-                              <p className="text-xs text-slate-400 text-center py-2">テキストを選択すると編集できます</p>
+                              <p className="text-xs text-slate-400 text-center py-4 bg-slate-100 rounded-lg border border-dashed border-slate-200">
+                                テキストをクリック(タップ)して編集・移動・色変更ができます
+                              </p>
                             )}
                           </div>
                         </div>
