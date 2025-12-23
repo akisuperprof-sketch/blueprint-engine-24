@@ -648,7 +648,7 @@ Archtype: ${draftData.archetype_name}
       ctx.fillText(layer.text, x, y);
     });
 
-    const newUrl = canvas.toDataURL("image/png");
+    const newUrl = canvas.toDataURL("image/png", 1.0); // Maximum quality for PNG (lossless)
     setFinalImage(newUrl);
     setTextLayers([]);
     setIsTextEditMode(false);
@@ -703,10 +703,7 @@ ${styleP}
 **Detailed Structure & Text Content:**
 ${constructDraftPrompt()}
 
-**Technical Constraints:**
-* Output: High Fidelity, rich colors, professional finish.
-* Text: Must be legible, distinct from background.
-* Layout: Follow the provided DRAFT IMAGE strictly for composition.
+**Visual Quality:** Masterpiece, ultra-high definition, 8k resolution, extremely detailed textures, sharp focus, professional color grading. Ensure every line is crisp and clean.
 
 ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 `;
