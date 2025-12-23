@@ -61,6 +61,13 @@ export default function Home() {
   const [finalImage, setFinalImage] = useState<string | null>(null);
   const [refineInst, setRefineInst] = useState('');
 
+  // Text Edit Mode State
+  const [isTextEditMode, setIsTextEditMode] = useState(false);
+  const [textLayers, setTextLayers] = useState<{ id: string, x: number, y: number, text: string }[]>([]);
+  const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+
   // Step 2 Extended (Draft Prompt Edit)
   const [isDraftPromptEditOpen, setDraftPromptEditOpen] = useState(false);
   const [useManualDraftPrompt, setUseManualDraftPrompt] = useState(false);
@@ -483,6 +490,75 @@ ${stepsStr}
       setPhase('draft');
     } catch (e: any) { handleError(e); }
     finally { setLoading(false); }
+  };
+
+  // --- Text Edit Mode Handlers ---
+  const addTextLayer = () => {
+    const newLayer = {
+      id: Date.now().toString(),
+      x: 50, // Default percent X
+      y: 50, // Default percent Y
+      text: "テキストを入力"
+    };
+    setTextLayers([...textLayers, newLayer]);
+    setSelectedTextId(newLayer.id);
+  };
+
+  const updateTextLayer = (id: string, updates: Partial<typeof textLayers[0]>) => {
+    setTextLayers(layers => layers.map(l => l.id === id ? { ...l, ...updates } : l));
+  };
+
+  const removeTextLayer = (id: string) => {
+    setTextLayers(layers => layers.filter(l => l.id !== id));
+    if (selectedTextId === id) setSelectedTextId(null);
+  };
+
+  const saveEditedImage = async () => {
+    if (!finalImage || !imageRef.current) return;
+
+    const img = imageRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Draw base image
+    ctx.drawImage(img, 0, 0);
+
+    // 2. Draw Text Layers
+    textLayers.forEach(layer => {
+      const x = (layer.x / 100) * canvas.width;
+      const y = (layer.y / 100) * canvas.height;
+
+      // Background Box
+      ctx.font = "bold 24px sans-serif"; // Base size, adjust scaling?
+      // For better quality, we might need dynamic scaling based on image size. 
+      // detailed implementation below.
+
+      const fontSize = Math.max(24, canvas.width / 40);
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+
+      const metrics = ctx.measureText(layer.text);
+      const padding = fontSize * 0.6;
+      const boxWidth = metrics.width + padding;
+      const boxHeight = fontSize * 1.5;
+
+      // Draw white background to hide original text
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - boxWidth / 2, y - boxHeight / 2, boxWidth, boxHeight);
+
+      // Draw Text
+      ctx.fillStyle = "#000000";
+      ctx.fillText(layer.text, x, y);
+    });
+
+    const newUrl = canvas.toDataURL("image/png");
+    setFinalImage(newUrl);
+    setTextLayers([]);
+    setIsTextEditMode(false);
   };
 
   // Step 4: Final Generation
@@ -1606,47 +1682,176 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                         </button>
                       </div>
                     </div>
-                    <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
-                      <img src={finalImage} className="w-full h-auto" alt="Final" />
-                    </div>
-                  </div>
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      {/* --- TEXT EDIT MODE UI --- */}
+                      {isTextEditMode ? (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <h4 className="font-bold text-blue-800 text-sm flex items-center gap-2">
+                              <span className="text-xl">🛠️</span> 文字化け修正 (Text Editor)
+                            </h4>
+                            <div className="flex gap-2">
+                              <button onClick={() => setIsTextEditMode(false)} className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700 font-bold">キャンセル</button>
+                              <button onClick={saveEditedImage} className="px-4 py-1.5 text-xs bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">保存して完了</button>
+                            </div>
+                          </div>
 
-                  {/* Refine & Download */}
-                  <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-                    <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200">
-                      <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Edit3 className="w-4 h-4" /> 修正・微調整</h4>
-                      <div className="flex gap-2">
-                        <input
-                          className="flex-1 border border-slate-200 rounded-lg p-2 text-sm"
-                          placeholder="例：パステルピンクと水色で優しい感じに、もっと文字を大きく..."
-                          value={refineInst}
-                          onChange={(e) => setRefineInst(e.target.value)}
-                        />
-                        <button
-                          onClick={() => generateFinal(true)}
-                          disabled={loading}
-                          className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold"
+                          {/* EDITOR CANVAS AREA */}
+                          <div className="relative w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-300">
+                            <img
+                              ref={imageRef}
+                              src={finalImage}
+                              className="w-full h-auto block select-none"
+                              alt="Editing Target"
+                            />
+
+                            {/* OVERLAY LAYERS */}
+                            {textLayers.map(layer => (
+                              <div
+                                key={layer.id}
+                                onClick={() => setSelectedTextId(layer.id)}
+                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-move group
+                                  ${selectedTextId === layer.id ? 'z-20' : 'z-10'}
+                               `}
+                                style={{ left: `${layer.x}%`, top: `${layer.y}%` }}
+                              >
+                                {/* Text Box Style: White bg, black text, shadow */}
+                                <div className={`bg-white text-black px-2 py-1 rounded shadow-md border 
+                                  ${selectedTextId === layer.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-300'}
+                               `}>
+                                  <span className="text-sm font-bold whitespace-nowrap select-none pointer-events-none">
+                                    {layer.text}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* CONTROLS */}
+                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="flex gap-2 mb-4">
+                              <button
+                                onClick={addTextLayer}
+                                className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm"
+                              >
+                                + テキスト追加
+                              </button>
+                            </div>
+
+                            {selectedTextId ? (
+                              <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                                {(() => {
+                                  const layer = textLayers.find(l => l.id === selectedTextId);
+                                  if (!layer) return null;
+                                  return (
+                                    <>
+                                      <div>
+                                        <label className="text-xs font-bold text-slate-500 mb-1 block">テキスト内容</label>
+                                        <input
+                                          value={layer.text}
+                                          onChange={(e) => updateTextLayer(layer.id, { text: e.target.value })}
+                                          className="w-full p-2 border border-slate-300 rounded text-sm"
+                                        />
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <label className="text-xs font-bold text-slate-500 mb-1 block">横位置 (X)</label>
+                                          <input
+                                            type="range" min="0" max="100"
+                                            value={layer.x}
+                                            onChange={(e) => updateTextLayer(layer.id, { x: parseInt(e.target.value) })}
+                                            className="w-full"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="text-xs font-bold text-slate-500 mb-1 block">縦位置 (Y)</label>
+                                          <input
+                                            type="range" min="0" max="100"
+                                            value={layer.y}
+                                            onChange={(e) => updateTextLayer(layer.id, { y: parseInt(e.target.value) })}
+                                            className="w-full"
+                                          />
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => removeTextLayer(layer.id)}
+                                        className="w-full py-2 bg-red-50 text-red-600 rounded text-xs font-bold hover:bg-red-100"
+                                      >
+                                        削除
+                                      </button>
+                                    </>
+                                  )
+                                })()}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-slate-400 text-center py-2">テキストを選択すると編集できます</p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        /* NORMAL VIEW */
+                        <div className="relative group">
+                          <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                            <img src={finalImage} className="w-full h-auto" alt="Final" />
+                          </div>
+                          {/* Overlay Button */}
+                          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => setIsTextEditMode(true)}
+                              className="bg-white/90 backdrop-blur text-slate-700 px-3 py-2 rounded-lg shadow-lg border border-slate-200 font-bold text-xs flex items-center gap-2 hover:bg-white"
+                            >
+                              🛠️ 文字修正モード
+                            </button>
+                          </div>
+                          <div className="mt-2 text-center">
+                            <button
+                              onClick={() => setIsTextEditMode(true)}
+                              className="inline-flex md:hidden bg-slate-100 text-slate-700 px-3 py-2 rounded-lg border border-slate-200 font-bold text-xs items-center gap-2"
+                            >
+                              🛠️ 文字化けを修正する
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Refine & Download */}
+                    <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
+                      <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200">
+                        <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Edit3 className="w-4 h-4" /> 修正・微調整</h4>
+                        <div className="flex gap-2">
+                          <input
+                            className="flex-1 border border-slate-200 rounded-lg p-2 text-sm"
+                            placeholder="例：パステルピンクと水色で優しい感じに、もっと文字を大きく..."
+                            value={refineInst}
+                            onChange={(e) => setRefineInst(e.target.value)}
+                          />
+                          <button
+                            onClick={() => generateFinal(true)}
+                            disabled={loading}
+                            className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold"
+                          >
+                            実行
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200 flex flex-col justify-center items-center">
+                        <a
+                          href={finalImage}
+                          download="blueprint_output.png"
+                          className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-center hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                         >
-                          実行
-                        </button>
+                          <Download className="w-5 h-5" /> 画像をダウンロード
+                        </a>
                       </div>
                     </div>
 
-                    <div className="bg-white/80 backdrop-blur rounded-xl p-6 border border-slate-200 flex flex-col justify-center items-center">
-                      <a
-                        href={finalImage}
-                        download="blueprint_output.png"
-                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-center hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Download className="w-5 h-5" /> 画像をダウンロード
-                      </a>
+                    <div className="text-center pt-8">
+                      <button onClick={() => window.location.reload()} className="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-2 mx-auto">
+                        <RotateCcw className="w-4 h-4" /> 最初から作り直す
+                      </button>
                     </div>
-                  </div>
-
-                  <div className="text-center pt-8">
-                    <button onClick={() => window.location.reload()} className="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-2 mx-auto">
-                      <RotateCcw className="w-4 h-4" /> 最初から作り直す
-                    </button>
                   </div>
                 </div>
               )}
