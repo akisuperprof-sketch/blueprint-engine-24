@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
     try {
-        const { apiKey, prompt, refImages } = await req.json();
+        const { apiKey, prompt, refImages, aspectRatio } = await req.json();
 
         const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
 
@@ -13,17 +13,29 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // 優先順位: 1. nano (指定) -> 2. 2.0-flash (最新) -> 3. 1.5-flash (安定)
         // 優先順位: 1. User Request (3-pro) -> 2. Nano Banana -> 3. 2.0-flash -> 4. 1.5-pro -> 5. 1.5-flash
         const modelsToTry = ["gemini-3-pro-image-preview", "nano-banana-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
 
         let lastError = "";
         let result = null;
 
+        // map aspectRatio "1:1" etc to string if needed, currently API expects "1:1", "16:9", "4:3", "3:4"
+        const validRatios = ["1:1", "16:9", "4:3", "3:4", "9:16"];
+        const ratioConfig = validRatios.includes(aspectRatio) ? aspectRatio : "1:1";
+
         for (const modelName of modelsToTry) {
             try {
-                console.log(`Starting generation with model: ${modelName}`);
-                const model = genAI.getGenerativeModel({ model: modelName });
+                console.log(`Starting generation with model: ${modelName}, ratio: ${ratioConfig}`);
+                // generationConfig で aspectRatio を指定
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    generationConfig: {
+                        temperature: 0.4,
+                        maxOutputTokens: 2048, // 画像生成には関係ない場合があるが念のため
+                        // @ts-ignore - SDKの型定義が追いついていない場合があるため
+                        aspectRatio: ratioConfig
+                    }
+                });
                 let content: any[] = [prompt];
 
                 if (refImages && Array.isArray(refImages)) {

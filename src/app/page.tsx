@@ -45,6 +45,7 @@ export default function Home() {
   const [refImages, setRefImages] = useState<{ data: string, mimeType: string }[]>([]);
   const [isRefMandatory, setIsRefMandatory] = useState(false);
   const [refImageRole, setRefImageRole] = useState<'general' | 'narrator'>('general');
+  const [aspectRatio, setAspectRatio] = useState("4:3");
   const [targetLanguage, setTargetLanguage] = useState('Japanese');
 
   // Struct Phase
@@ -424,7 +425,8 @@ ${stepsStr}
         body: JSON.stringify({
           prompt: final_prompt_text,
           apiKey: apiKey,
-          refImages: refImages // Ensure refImages are passed
+          refImages: refImages, // Ensure refImages are passed
+          aspectRatio: aspectRatio
         })
       });
       const data = await res.json();
@@ -532,7 +534,8 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
           //   ? [{ data: finalRefData, mimeType: "image/jpeg" }]
           //   : [])
           // SPECIFICATION.md: Draft images are NOT sent as visual references during final rendering to save bandwidth and quota.
-          refImages: []
+          refImages: [],
+          aspectRatio: aspectRatio
         })
       });
 
@@ -732,6 +735,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                 </p>
               )}
             </div>
+
             <button
               onClick={() => setIsSettingsOpen(false)}
               className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -748,475 +752,582 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
       <ProgressBar />
 
       {/* --- PHASE 1: INPUT --- */}
-      {phase === 'input' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {
+        phase === 'input' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-          {/* Introduction Section */}
-          <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
-            <h2 className="text-2xl font-bold mb-4 text-slate-900 leading-snug">
-              複雑を、美しく。あなたの頭脳のもう一つの設計エンジン。
-            </h2>
-            <div className="space-y-4 text-slate-700 leading-relaxed">
-              <p>
-                Blueprint Engineは、あなたの思考を瞬時に「構造化された設計図」へ可視化する知的エンジンです。
-              </p>
-              <p>
-                企画・戦略整理などの知的作業時間を劇的に短縮し、論理とAIの融合で、誰でも即座に「伝わる図解」を作成できます。
-              </p>
-            </div>
-
-            {/* Collapsible Details */}
-            <div className="mt-6">
-              <button
-                onClick={() => setIsDetailsOpen(!isDetailsOpen)}
-                className="flex items-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-3 rounded-lg transition-colors border-l-4 border-red-400"
-              >
-                <ChevronRight className={`w-5 h-5 transition-transform ${isDetailsOpen ? 'rotate-90' : ''}`} />
-                詳細な機能紹介
-              </button>
-
-              {isDetailsOpen && (
-                <div className="mt-3 p-5 bg-white rounded-lg border border-slate-100 text-slate-600 space-y-6 text-sm leading-relaxed animate-in fade-in zoom-in-95 duration-200">
-                  {/* Section 1: Why Needed */}
-                  <section>
-                    <h3 className="font-bold text-slate-800 text-lg mb-2 flex items-center gap-2">
-                      なぜ今、図解ツールが必要なのか
-                    </h3>
-                    <p className="mb-2 text-xs text-slate-400">ここ、けっこう大事な話なんですけど...</p>
-                    <div className="space-y-3">
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <strong className="block text-slate-800 mb-1">● 情報過多の時代に「一瞬で伝わる」が武器になる</strong>
-                        <p>文字だけの情報って、正直スルーされちゃいません？私もタイムライン流し見してるとき、文字びっしりの投稿はスーッと通り過ぎちゃいます。でも図解があると、手が止まるんですよね。「お、なんかわかりやすそう」って。</p>
-                      </div>
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <strong className="block text-slate-800 mb-1">● デザイナーさんに頼むと高い問題</strong>
-                        <p>これ、地味にキツくないですか？インフォグラフィック1枚で5,000円〜数万円。週に3本コンテンツ出すなら、月に6万円以上... 私も最初は外注してたんですけど、「これ、自分で作れたらなあ」ってずっと思ってました。</p>
-                      </div>
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <strong className="block text-slate-800 mb-1">● アイデアは鮮度が命</strong>
-                        <p>「今これ思いついた！」ってときに、「来週デザイン上がります」じゃ遅いんですよね。そのときの熱量で出したいじゃないですか。結局、自分で作れる人が最強の時代になったんです。</p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Section 2: Mechanism */}
-                  <section>
-                    <h3 className="font-bold text-slate-800 text-lg mb-2 mt-2 text-indigo-700">
-                      3. ここがヤバい！3ステップ生成の仕組み
-                    </h3>
-                    <p className="mb-3">
-                      このツールの最大の特徴... <strong className="marker:text-red-500 text-red-500 font-bold">いきなり完成画像を作らない</strong>んです。
-                      「え、それ遠回りじゃない？」って思うかもしれないんですけど、これがミソで。プロのデザイナーさんって、いきなり色塗り始めないですよね？まず構成考えて、ラフ描いて、それから仕上げる。その流れをAIが再現してるんです。
-                    </p>
-
-                    <div className="space-y-4 pl-2 border-l-2 border-slate-200 ml-1">
-                      <div>
-                        <h4 className="font-bold text-slate-800">■ Step 1: 構造化 (Structure)</h4>
-                        <p className="text-xs mt-1">
-                          最新の言語モデル <code>gemini-3-pro-preview</code> が、入力されたテキストを読み解きます。
-                          <br />
-                          ここがすごいのは、<strong>「これは比較図がいいな」「タイムラインで見せよう」みたいな判断を、AIが勝手にやってくれる</strong>んです。
-                          もちろん手動で変えることもできます。
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          (対応: 比較・対比 / プロセス・手順 / 年表・タイムライン / 階層・ピラミッド / 循環・サイクル / マインドマップ / マトリックス / 解剖図)
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800">■ Step 2: ラフスケッチ (Draft)</h4>
-                        <p className="text-xs mt-1">
-                          次に、画像モデル <code>Nano Banana Pro (gemini-3-pro-image-preview)</code> が、白黒のラフ画を描きます。
-                          <br />
-                          「この配置でいい？」って確認できるから、失敗がないんですよね。今は「もうちょい左」とか「要素増やして」とか、この段階で調整できるから本当に助かってます。
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800">■ Step 3: 仕上げ (Final Design)</h4>
-                        <p className="text-xs mt-1">
-                          最後に、選んだスタイルで色塗って、ディテール描き込んで完成！30秒〜1分で出てきます。正直、最初見たときシビれましたね...
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Section 3: Styles */}
-                  <section>
-                    <h3 className="font-bold text-slate-800 text-lg mb-3 mt-4 text-pink-600">
-                      4. 選べるデザインスタイル13種類
-                    </h3>
-                    <p className="mb-3">今の気分とか、使う場所に合わせて、いろんなスタイルが選べます！</p>
-                    <ul className="grid grid-cols-2 gap-2 text-xs">
-                      <li><span className="font-bold">・ビジネス・プロ</span> → プレゼン資料に信頼感</li>
-                      <li><span className="font-bold">・ポップ・インフォ</span> → 鮮やかで視認性抜群</li>
-                      <li><span className="font-bold">・手書きスケッチ</span> → 親しみやすいホワイトボード風</li>
-                      <li><span className="font-bold">・ミニマリスト</span> → シンプルイズベスト</li>
-                      <li><span className="font-bold">・3Dアイソメトリック</span> → 箱庭っぽくて可愛い</li>
-                      <li><span className="font-bold">・サイバーパンク</span> → ネオンでかっこいい</li>
-                      <li><span className="font-bold">・漫画風</span> → インパクト重視</li>
-                      <li><span className="font-bold">・クレイアニメ風</span> → 粘土っぽい温かみ</li>
-                      <li><span className="font-bold">・レトロゲーム風</span> → ドット絵テイスト</li>
-                      <li><span className="font-bold">・水彩画風</span> → アートっぽい質感</li>
-                      <li><span className="font-bold">・切り絵風</span> → 和のテイスト</li>
-                      <li><span className="font-bold">・黒板アート風</span> → 教育系に最適</li>
-                      <li><span className="font-bold">・ネオンガラス風</span> → モダンで洗練された感じ</li>
-                    </ul>
-                    <p className="mt-3 text-xs bg-pink-50 text-pink-700 p-2 rounded">
-                      💡 さらに、色味とか雰囲気も自然言語で「パステルピンクと水色で優しい感じに」とか伝えるだけでOKです！
-                    </p>
-                  </section>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-blue-100 shadow-sm">
-            <h2 className="text-xl font-bold mb-2 text-slate-800">01. 図解したい内容を入力</h2>
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 text-xs text-blue-800 flex items-start gap-2">
-              <span className="text-base">💡</span>
-              <div>
-                <strong>入力のコツ:</strong> 比較なら「強み・弱み」、手順なら「Step1, 2...」を意識して書くとAIが構造を捉えやすくなります。
+            {/* Introduction Section */}
+            <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+              <h2 className="text-2xl font-bold mb-4 text-slate-900 leading-snug">
+                複雑を、美しく。あなたの頭脳のもう一つの設計エンジン。
+              </h2>
+              <div className="space-y-4 text-slate-700 leading-relaxed">
+                <p>
+                  Blueprint Engineは、あなたの思考を瞬時に「構造化された設計図」へ可視化する知的エンジンです。
+                </p>
+                <p>
+                  企画・戦略整理などの知的作業時間を劇的に短縮し、論理とAIの融合で、誰でも即座に「伝わる図解」を作成できます。
+                </p>
               </div>
-            </div>
-            <textarea
-              className="w-full h-48 p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/90 resize-none font-medium"
-              placeholder="例：マーケティング戦略の比較、コーヒーの淹れ方手順..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-            />
-          </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-slate-200">
-              <h3 className="flex items-center gap-2 font-bold text-slate-700 mb-4">
-                <ImageIcon className="w-5 h-5 text-blue-500" /> 参考画像・キャラクター (任意)
-              </h3>
-              <div className="flex flex-col gap-3 mb-4">
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
-                  <h5 className="font-bold text-blue-800 text-sm mb-1 flex items-center gap-2">
-                    💡 活用テクニック: 自分のキャラを登場させる！
-                  </h5>
-                  <p className="text-xs text-blue-700 leading-relaxed">
-                    自分のアイコンや製品写真をアップすると、図解の中に登場させることができます。
-                    <strong>白背景や単色背景の画像</strong>を使うと、より綺麗に認識されます！
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                    <Upload className="w-4 h-4" /> アップロード
-                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" checked={isRefMandatory} onChange={(e) => setIsRefMandatory(e.target.checked)} className="rounded text-blue-600" />
-                    画像要素を必須にする
-                  </label>
-                </div>
+              {/* Collapsible Details */}
+              <div className="mt-6">
+                <button
+                  onClick={() => setIsDetailsOpen(!isDetailsOpen)}
+                  className="flex items-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-3 rounded-lg transition-colors border-l-4 border-red-400"
+                >
+                  <ChevronRight className={`w-5 h-5 transition-transform ${isDetailsOpen ? 'rotate-90' : ''}`} />
+                  詳細な機能紹介
+                </button>
 
-                {refImages.length > 0 && (
-                  <div className="flex bg-slate-50 p-1.5 rounded-lg border border-slate-200 w-fit">
-                    <button
-                      onClick={() => setRefImageRole('general')}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${refImageRole === 'general' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
-                    >
-                      メインとして利用
-                    </button>
-                    <button
-                      onClick={() => setRefImageRole('narrator')}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${refImageRole === 'narrator' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
-                    >
-                      解説者として配置
-                    </button>
+                {isDetailsOpen && (
+                  <div className="mt-3 p-5 bg-white rounded-lg border border-slate-100 text-slate-600 space-y-6 text-sm leading-relaxed animate-in fade-in zoom-in-95 duration-200">
+                    {/* Section 1: Why Needed */}
+                    <section>
+                      <h3 className="font-bold text-slate-800 text-lg mb-2 flex items-center gap-2">
+                        なぜ今、図解ツールが必要なのか
+                      </h3>
+                      <p className="mb-2 text-xs text-slate-400">ここ、けっこう大事な話なんですけど...</p>
+                      <div className="space-y-3">
+                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                          <strong className="block text-slate-800 mb-1">● 情報過多の時代に「一瞬で伝わる」が武器になる</strong>
+                          <p>文字だけの情報って、正直スルーされちゃいません？私もタイムライン流し見してるとき、文字びっしりの投稿はスーッと通り過ぎちゃいます。でも図解があると、手が止まるんですよね。「お、なんかわかりやすそう」って。</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                          <strong className="block text-slate-800 mb-1">● デザイナーさんに頼むと高い問題</strong>
+                          <p>これ、地味にキツくないですか？インフォグラフィック1枚で5,000円〜数万円。週に3本コンテンツ出すなら、月に6万円以上... 私も最初は外注してたんですけど、「これ、自分で作れたらなあ」ってずっと思ってました。</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                          <strong className="block text-slate-800 mb-1">● アイデアは鮮度が命</strong>
+                          <p>「今これ思いついた！」ってときに、「来週デザイン上がります」じゃ遅いんですよね。そのときの熱量で出したいじゃないですか。結局、自分で作れる人が最強の時代になったんです。</p>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Section 2: Mechanism */}
+                    <section>
+                      <h3 className="font-bold text-slate-800 text-lg mb-2 mt-2 text-indigo-700">
+                        3. ここがヤバい！3ステップ生成の仕組み
+                      </h3>
+                      <p className="mb-3">
+                        このツールの最大の特徴... <strong className="marker:text-red-500 text-red-500 font-bold">いきなり完成画像を作らない</strong>んです。
+                        「え、それ遠回りじゃない？」って思うかもしれないんですけど、これがミソで。プロのデザイナーさんって、いきなり色塗り始めないですよね？まず構成考えて、ラフ描いて、それから仕上げる。その流れをAIが再現してるんです。
+                      </p>
+
+                      <div className="space-y-4 pl-2 border-l-2 border-slate-200 ml-1">
+                        <div>
+                          <h4 className="font-bold text-slate-800">■ Step 1: 構造化 (Structure)</h4>
+                          <p className="text-xs mt-1">
+                            最新の言語モデル <code>gemini-3-pro-preview</code> が、入力されたテキストを読み解きます。
+                            <br />
+                            ここがすごいのは、<strong>「これは比較図がいいな」「タイムラインで見せよう」みたいな判断を、AIが勝手にやってくれる</strong>んです。
+                            もちろん手動で変えることもできます。
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            (対応: 比較・対比 / プロセス・手順 / 年表・タイムライン / 階層・ピラミッド / 循環・サイクル / マインドマップ / マトリックス / 解剖図)
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800">■ Step 2: ラフスケッチ (Draft)</h4>
+                          <p className="text-xs mt-1">
+                            次に、画像モデル <code>Nano Banana Pro (gemini-3-pro-image-preview)</code> が、白黒のラフ画を描きます。
+                            <br />
+                            「この配置でいい？」って確認できるから、失敗がないんですよね。今は「もうちょい左」とか「要素増やして」とか、この段階で調整できるから本当に助かってます。
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800">■ Step 3: 仕上げ (Final Design)</h4>
+                          <p className="text-xs mt-1">
+                            最後に、選んだスタイルで色塗って、ディテール描き込んで完成！30秒〜1分で出てきます。正直、最初見たときシビれましたね...
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Section 3: Styles */}
+                    <section>
+                      <h3 className="font-bold text-slate-800 text-lg mb-3 mt-4 text-pink-600">
+                        4. 選べるデザインスタイル13種類
+                      </h3>
+                      <p className="mb-3">今の気分とか、使う場所に合わせて、いろんなスタイルが選べます！</p>
+                      <ul className="grid grid-cols-2 gap-2 text-xs">
+                        <li><span className="font-bold">・ビジネス・プロ</span> → プレゼン資料に信頼感</li>
+                        <li><span className="font-bold">・ポップ・インフォ</span> → 鮮やかで視認性抜群</li>
+                        <li><span className="font-bold">・手書きスケッチ</span> → 親しみやすいホワイトボード風</li>
+                        <li><span className="font-bold">・ミニマリスト</span> → シンプルイズベスト</li>
+                        <li><span className="font-bold">・3Dアイソメトリック</span> → 箱庭っぽくて可愛い</li>
+                        <li><span className="font-bold">・サイバーパンク</span> → ネオンでかっこいい</li>
+                        <li><span className="font-bold">・漫画風</span> → インパクト重視</li>
+                        <li><span className="font-bold">・クレイアニメ風</span> → 粘土っぽい温かみ</li>
+                        <li><span className="font-bold">・レトロゲーム風</span> → ドット絵テイスト</li>
+                        <li><span className="font-bold">・水彩画風</span> → アートっぽい質感</li>
+                        <li><span className="font-bold">・切り絵風</span> → 和のテイスト</li>
+                        <li><span className="font-bold">・黒板アート風</span> → 教育系に最適</li>
+                        <li><span className="font-bold">・ネオンガラス風</span> → モダンで洗練された感じ</li>
+                      </ul>
+                      <p className="mt-3 text-xs bg-pink-50 text-pink-700 p-2 rounded">
+                        💡 さらに、色味とか雰囲気も自然言語で「パステルピンクと水色で優しい感じに」とか伝えるだけでOKです！
+                      </p>
+                    </section>
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {refImages.map((img, i) => (
-                  <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
-                    <img src={`data:${img.mimeType};base64,${img.data}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-slate-200 shadow-sm">
-              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Settings className="w-5 h-5 text-slate-400" /> 詳細設定</h3>
-              <div className="space-y-4">
-                <select value={archetype} onChange={(e) => setArchetype(e.target.value)} className="w-full p-2 rounded-lg border border-slate-200 bg-white/50">
-                  {ARCHETYPES.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
-
-                {/* Language Selector */}
+            <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-blue-100 shadow-sm">
+              <h2 className="text-xl font-bold mb-2 text-slate-800">01. 図解したい内容を入力</h2>
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 text-xs text-blue-800 flex items-start gap-2">
+                <span className="text-base">💡</span>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">出力言語 (Output Language)</label>
-                  <select
-                    value={targetLanguage}
-                    onChange={(e) => setTargetLanguage(e.target.value)}
-                    className="w-full p-2 rounded-lg border border-slate-200 bg-white/50 text-sm"
-                  >
-                    <option value="Japanese">日本語 (Japanese)</option>
-                    <option value="English">英語 (English)</option>
-                    <option value="Chinese">中国語 (Chinese)</option>
-                    <option value="Korean">韓国語 (Korean)</option>
-                    <option value="Spanish">スペイン語 (Spanish)</option>
-                    <option value="French">フランス語 (French)</option>
-                  </select>
+                  <strong>入力のコツ:</strong> 比較なら「強み・弱み」、手順なら「Step1, 2...」を意識して書くとAIが構造を捉えやすくなります。
                 </div>
-
-                <textarea
-                  value={additionalInst}
-                  onChange={(e) => setAdditionalInst(e.target.value)}
-                  placeholder="追加の指示 (例: 青を基調に...)"
-                  className="w-full h-20 p-3 rounded-lg border border-slate-200 bg-white/50 text-sm"
-                />
               </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <button
-              onClick={generateStructure}
-              disabled={loading || !inputText}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {loading ? '解析中...' : <>構造化を開始する <ChevronRight className="w-5 h-5" /></>}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* --- PHASE 2: STRUCTURE --- */}
-      {phase === 'struct' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-white/90 rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-800">02. 構成案の確認</h2>
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-blue-500" /> タイトル (Title)
-              </label>
-              <input
-                value={draftData.main_title || ''}
-                onChange={(e) => setDraftData({ ...draftData, main_title: e.target.value })}
-                className="w-full text-lg font-bold p-3 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                placeholder="タイトルを入力..."
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-blue-500" /> 概要・目的 (Summary)
-              </label>
               <textarea
-                value={draftData.summary || ''}
-                onChange={(e) => setDraftData({ ...draftData, summary: e.target.value })}
-                className="w-full text-base text-slate-700 p-3 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none h-24"
-                placeholder="概要を入力..."
+                className="w-full h-48 p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white/90 resize-none font-medium"
+                placeholder="例：マーケティング戦略の比較、コーヒーの淹れ方手順..."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
               />
             </div>
 
-            <div className="space-y-4 mt-8">
-              {/* HEADER EDIT */}
-              {draftData.header && (
-                <div className="bg-slate-800 text-white p-4 rounded-xl shadow-sm mb-6">
-                  <h4 className="font-bold text-xs uppercase tracking-wider mb-3 border-b border-slate-600 pb-1 text-slate-300">Header</h4>
-                  <div className="space-y-3">
-                    <input
-                      value={draftData.header.heading}
-                      onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, heading: e.target.value } })}
-                      className="w-full bg-slate-700 border-none text-white font-bold p-2 rounded focus:ring-2 focus:ring-blue-500"
-                      placeholder="ヘッダー見出し..."
-                    />
-                    <input
-                      value={draftData.header.content}
-                      onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, content: e.target.value } })}
-                      className="w-full bg-slate-700 border-none text-slate-300 text-sm p-2 rounded focus:ring-2 focus:ring-blue-500"
-                      placeholder="サブタイトルなど..."
-                    />
-                    <input
-                      value={draftData.header.visual_desc}
-                      onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, visual_desc: e.target.value } })}
-                      className="w-full bg-slate-700 border-none text-slate-400 text-xs p-2 rounded focus:ring-2 focus:ring-blue-500"
-                      placeholder="ヘッダーの視覚指示..."
-                    />
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-slate-200">
+                <h3 className="flex items-center gap-2 font-bold text-slate-700 mb-4">
+                  <ImageIcon className="w-5 h-5 text-blue-500" /> 参考画像・キャラクター (任意)
+                </h3>
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-2">
+                    <h5 className="font-bold text-blue-800 text-sm mb-1 flex items-center gap-2">
+                      💡 活用テクニック: 自分のキャラを登場させる！
+                    </h5>
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      自分のアイコンや製品写真をアップすると、図解の中に登場させることができます。
+                      <strong>白背景や単色背景の画像</strong>を使うと、より綺麗に認識されます！
+                    </p>
                   </div>
-                </div>
-              )}
-
-              <h3 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2 mt-8">
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">BLOCKS</span> 構成要素の編集
-              </h3>
-              {draftData.steps?.map((step: any, idx: number) => (
-                <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-4">
-                  <div className="flex gap-4 items-start">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0 mt-1">
-                      {idx + 1}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Heading / Point</label>
-                        <input
-                          value={step.heading || step.label}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const newSteps = [...(draftData.steps || [])];
-                            newSteps[idx].heading = e.target.value;
-                            // Keep label synced for backward compatibility if needed, or primarily use heading
-                            newSteps[idx].label = e.target.value;
-                            setDraftData({ ...draftData, steps: newSteps });
-                          }}
-                          className="w-full font-bold text-slate-800 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                          placeholder="見出し..."
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Content</label>
-                        <textarea
-                          value={step.content || ""}
-                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                            const newSteps = [...(draftData.steps || [])];
-                            newSteps[idx].content = e.target.value;
-                            setDraftData({ ...draftData, steps: newSteps });
-                          }}
-                          className="w-full text-sm text-slate-700 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none resize-none h-16"
-                          placeholder="詳細な説明文..."
-                        />
-                      </div>
-                      <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                        <label className="text-xs font-bold text-blue-600 mb-1 block uppercase flex items-center gap-1">
-                          <ImageIcon className="w-3 h-3" /> Visual Instruction
-                        </label>
-                        <input
-                          value={step.visual_desc}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const newSteps = [...(draftData.steps || [])];
-                            newSteps[idx].visual_desc = e.target.value;
-                            setDraftData({ ...draftData, steps: newSteps });
-                          }}
-                          className="w-full text-xs text-slate-600 p-2 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                          placeholder="具体的なイラスト指示・キャラポーズ..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* FOOTER EDIT */}
-              {draftData.footer && (
-                <div className="bg-slate-800 text-white p-4 rounded-xl shadow-sm mt-6">
-                  <h4 className="font-bold text-xs uppercase tracking-wider mb-3 border-b border-slate-600 pb-1 text-slate-300">Footer</h4>
-                  <div className="space-y-3">
-                    <input
-                      value={draftData.footer.heading}
-                      onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, heading: e.target.value } })}
-                      className="w-full bg-slate-700 border-none text-white font-bold p-2 rounded focus:ring-2 focus:ring-blue-500"
-                      placeholder="フッター見出し..."
-                    />
-                    <input
-                      value={draftData.footer.content}
-                      onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, content: e.target.value } })}
-                      className="w-full bg-slate-700 border-none text-slate-300 text-sm p-2 rounded focus:ring-2 focus:ring-blue-500"
-                      placeholder="締めくくり..."
-                    />
-                    <input
-                      value={draftData.footer.visual_desc}
-                      onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, visual_desc: e.target.value } })}
-                      className="w-full bg-slate-700 border-none text-slate-400 text-xs p-2 rounded focus:ring-2 focus:ring-blue-500"
-                      placeholder="フッターの視覚指示..."
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* AI Update Section */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-8">
-              <label className="text-sm font-bold text-slate-700 block mb-2">
-                AIに修正指示を出す (AI Update)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="例: 全体的にもっと簡潔に、Step3を削除して..."
-                  value={retakeInstr}
-                  onChange={(e) => setRetakeInstr(e.target.value)}
-                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-                <button
-                  onClick={updateStructure}
-                  disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all"
-                >
-                  AI修正実行
-                </button>
-              </div>
-            </div>
-
-            {/* Advanced Draft Prompt Editor */}
-            <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200 mt-8 shadow-md">
-              <button
-                onClick={handleDraftPromptEditToggle}
-                className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm hover:text-blue-600 transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-slate-400" /> 上級者向け: ドラフト生成プロンプトの編集
-                </span>
-                <ChevronRight className={`w-4 h-4 transition-transform ${isDraftPromptEditOpen ? 'rotate-90' : ''}`} />
-              </button>
-
-              {isDraftPromptEditOpen && (
-                <div className="mt-4 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <input
-                      type="checkbox"
-                      id="useManualDraftPrompt"
-                      checked={useManualDraftPrompt}
-                      onChange={(e) => {
-                        setUseManualDraftPrompt(e.target.checked);
-                        if (e.target.checked && !manualDraftPrompt) {
-                          setManualDraftPrompt(constructDraftPrompt());
-                        }
-                      }}
-                      className="rounded text-blue-600 focus:ring-blue-500"
-                    />
-                    <label htmlFor="useManualDraftPrompt" className="text-sm font-bold text-slate-700 cursor-pointer">
-                      手動プロンプトを適用する (Override with manual prompt)
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                      <Upload className="w-4 h-4" /> アップロード
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-600">
+                      <input type="checkbox" checked={isRefMandatory} onChange={(e) => setIsRefMandatory(e.target.checked)} className="rounded text-blue-600" />
+                      画像要素を必須にする
                     </label>
                   </div>
 
-                  {useManualDraftPrompt && (
-                    <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-3 border border-yellow-100 flex gap-2 items-start">
-                      <span className="text-lg">⚠️</span>
-                      <div>
-                        <strong>注意:</strong> ここをチェックしている間は、<strong>上のフォームの内容（タイトル変更など）は無視され</strong>、以下のプロンプトがそのまま使用されます。
-                      </div>
+                  {refImages.length > 0 && (
+                    <div className="flex bg-slate-50 p-1.5 rounded-lg border border-slate-200 w-fit">
+                      <button
+                        onClick={() => setRefImageRole('general')}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${refImageRole === 'general' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
+                      >
+                        メインとして利用
+                      </button>
+                      <button
+                        onClick={() => setRefImageRole('narrator')}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${refImageRole === 'narrator' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
+                      >
+                        解説者として配置
+                      </button>
                     </div>
                   )}
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {refImages.map((img, i) => (
+                    <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
+                      <img src={`data:${img.mimeType};base64,${img.data}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Settings className="w-5 h-5 text-slate-400" /> 詳細設定</h3>
+                <div className="space-y-4">
+                  <select value={archetype} onChange={(e) => setArchetype(e.target.value)} className="w-full p-2 rounded-lg border border-slate-200 bg-white/50">
+                    {ARCHETYPES.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+
+                  {/* Aspect Ratio Selector Removed from here */}
+
+                  {/* Language Selector */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">出力言語 (Output Language)</label>
+                    <select
+                      value={targetLanguage}
+                      onChange={(e) => setTargetLanguage(e.target.value)}
+                      className="w-full p-2 rounded-lg border border-slate-200 bg-white/50 text-sm"
+                    >
+                      <option value="Japanese">日本語 (Japanese)</option>
+                      <option value="English">英語 (English)</option>
+                      <option value="Chinese">中国語 (Chinese)</option>
+                      <option value="Korean">韓国語 (Korean)</option>
+                      <option value="Spanish">スペイン語 (Spanish)</option>
+                      <option value="French">フランス語 (French)</option>
+                    </select>
+                  </div>
+
                   <textarea
-                    value={manualDraftPrompt}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setManualDraftPrompt(e.target.value)}
-                    disabled={!useManualDraftPrompt}
-                    placeholder={useManualDraftPrompt ? "プロンプトを編集してください..." : "チェックを入れると編集できます"}
-                    className={`w-full h-64 p-3 text-xs font-mono border rounded-lg outline-none leading-relaxed transition-colors
-                      ${useManualDraftPrompt ? 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
+                    value={additionalInst}
+                    onChange={(e) => setAdditionalInst(e.target.value)}
+                    placeholder="追加の指示 (例: 青を基調に...)"
+                    className="w-full h-20 p-3 rounded-lg border border-slate-200 bg-white/50 text-sm"
                   />
                 </div>
-              )}
+              </div>
             </div>
-            <div className="flex justify-between pt-6 border-t border-slate-100 mt-6">
-              <button onClick={() => setPhase('input')} className="px-6 py-3 text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl font-bold transition-all shadow-sm">
-                ← 戻る
-              </button>
+
+            {/* Aspect Ratio Selector (Moved Here) */}
+            <div className="pt-2">
+              <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">Option</span> 画像サイズを選択
+              </h3>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { id: "1:1", label: "正方形 (1:1)", icon: <div className="w-4 h-4 border-2 border-current rounded-sm" /> },
+                  { id: "3:4", label: "A4縦 (3:4)", icon: <div className="w-3 h-5 border-2 border-current rounded-sm" /> },
+                  { id: "4:3", label: "A4横 (4:3)", icon: <div className="w-5 h-3 border-2 border-current rounded-sm" /> },
+                  { id: "16:9", label: "ワイド (16:9)", icon: <div className="w-6 h-3 border-2 border-current rounded-sm" /> },
+                ].map((ratio) => {
+                  const isSelected = aspectRatio === ratio.id;
+                  return (
+                    <button
+                      key={ratio.id}
+                      onClick={() => setAspectRatio(ratio.id)}
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${isSelected
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md transform scale-[1.02]'
+                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300'
+                        }`}
+                    >
+                      <div className={`mb-1.5 ${isSelected ? 'opacity-100' : 'opacity-60'}`}>
+                        {ratio.icon}
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-bold">{ratio.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
               <button
-                onClick={generateDraft}
-                disabled={loading}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+                onClick={generateStructure}
+                disabled={loading || !inputText}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {loading ? '生成中...' : <>ドラフト作成 <ChevronRight className="w-5 h-5" /></>}
+                {loading ? '解析中...' : <>構造化を開始する <ChevronRight className="w-5 h-5" /></>}
               </button>
             </div>
           </div>
-        </div>
-      )
+        )
+      }
+
+      {/* --- PHASE 2: STRUCTURE --- */}
+      {
+        phase === 'struct' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white/90 rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-800">02. 構成案の確認</h2>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-blue-500" /> タイトル (Title)
+                </label>
+                <input
+                  value={draftData.main_title || ''}
+                  onChange={(e) => setDraftData({ ...draftData, main_title: e.target.value })}
+                  className="w-full text-lg font-bold p-3 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="タイトルを入力..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-blue-500" /> 概要・目的 (Summary)
+                </label>
+                <textarea
+                  value={draftData.summary || ''}
+                  onChange={(e) => setDraftData({ ...draftData, summary: e.target.value })}
+                  className="w-full text-base text-slate-700 p-3 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none h-24"
+                  placeholder="概要を入力..."
+                />
+              </div>
+
+              <div className="space-y-4 mt-8">
+                {/* HEADER EDIT */}
+                {/* HEADER EDIT */}
+                {draftData.header && (
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 relative group transition-shadow hover:shadow-md">
+                    <div className="flex gap-4 items-start">
+                      {/* Badge */}
+                      <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0 mt-1 uppercase">
+                        H
+                      </div>
+
+                      <div className="flex-1 space-y-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <h4 className="font-bold text-sm text-slate-700">ヘッダー (Header)</h4>
+                          <button
+                            onClick={() => {
+                              if (confirm('ヘッダー要素を削除しますか？')) {
+                                const newData = { ...draftData };
+                                delete newData.header;
+                                setDraftData(newData);
+                              }
+                            }}
+                            className="text-slate-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors flex items-center gap-1"
+                            title="ヘッダーを削除"
+                          >
+                            <span className="text-xs font-bold">削除</span>
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Heading</label>
+                          <input
+                            value={draftData.header.heading}
+                            onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, heading: e.target.value } })}
+                            className="w-full font-bold text-slate-800 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="ヘッダー見出し..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Content</label>
+                          <input
+                            value={draftData.header.content}
+                            onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, content: e.target.value } })}
+                            className="w-full text-sm text-slate-700 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="サブタイトルなど..."
+                          />
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                          <label className="text-xs font-bold text-blue-600 mb-1 block uppercase flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" /> Visual Instruction
+                          </label>
+                          <input
+                            value={draftData.header.visual_desc}
+                            onChange={(e) => setDraftData({ ...draftData, header: { ...draftData.header!, visual_desc: e.target.value } })}
+                            className="w-full text-xs text-slate-600 p-2 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="ヘッダーの視覚指示..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <h3 className="font-bold text-slate-800 border-b pb-2 flex items-center gap-2 mt-8">
+                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">BLOCKS</span> 構成要素の編集
+                </h3>
+                {draftData.steps?.map((step: any, idx: number) => (
+                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-4">
+                    <div className="flex gap-4 items-start">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0 mt-1">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Heading / Point</label>
+                          <input
+                            value={step.heading || step.label}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              const newSteps = [...(draftData.steps || [])];
+                              newSteps[idx].heading = e.target.value;
+                              // Keep label synced for backward compatibility if needed, or primarily use heading
+                              newSteps[idx].label = e.target.value;
+                              setDraftData({ ...draftData, steps: newSteps });
+                            }}
+                            className="w-full font-bold text-slate-800 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="見出し..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Content</label>
+                          <textarea
+                            value={step.content || ""}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                              const newSteps = [...(draftData.steps || [])];
+                              newSteps[idx].content = e.target.value;
+                              setDraftData({ ...draftData, steps: newSteps });
+                            }}
+                            className="w-full text-sm text-slate-700 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none resize-none h-16"
+                            placeholder="詳細な説明文..."
+                          />
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                          <label className="text-xs font-bold text-blue-600 mb-1 block uppercase flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" /> Visual Instruction
+                          </label>
+                          <input
+                            value={step.visual_desc}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              const newSteps = [...(draftData.steps || [])];
+                              newSteps[idx].visual_desc = e.target.value;
+                              setDraftData({ ...draftData, steps: newSteps });
+                            }}
+                            className="w-full text-xs text-slate-600 p-2 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="具体的なイラスト指示・キャラポーズ..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* FOOTER EDIT */}
+                {/* FOOTER EDIT */}
+                {draftData.footer && (
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mt-6 relative group transition-shadow hover:shadow-md">
+                    <div className="flex gap-4 items-start">
+                      {/* Badge */}
+                      <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0 mt-1 uppercase">
+                        F
+                      </div>
+
+                      <div className="flex-1 space-y-3">
+                        <div className="flex justify-between items-center mb-1">
+                          <h4 className="font-bold text-sm text-slate-700">フッター (Footer)</h4>
+                          <button
+                            onClick={() => {
+                              if (confirm('フッター要素を削除しますか？')) {
+                                const newData = { ...draftData };
+                                delete newData.footer;
+                                setDraftData(newData);
+                              }
+                            }}
+                            className="text-slate-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors flex items-center gap-1"
+                            title="フッターを削除"
+                          >
+                            <span className="text-xs font-bold">削除</span>
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Heading</label>
+                          <input
+                            value={draftData.footer.heading}
+                            onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, heading: e.target.value } })}
+                            className="w-full font-bold text-slate-800 p-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="フッター見出し..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-400 mb-1 block uppercase">Content</label>
+                          <input
+                            value={draftData.footer.content}
+                            onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, content: e.target.value } })}
+                            className="w-full text-sm text-slate-700 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="締めくくり..."
+                          />
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                          <label className="text-xs font-bold text-blue-600 mb-1 block uppercase flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3" /> Visual Instruction
+                          </label>
+                          <input
+                            value={draftData.footer.visual_desc}
+                            onChange={(e) => setDraftData({ ...draftData, footer: { ...draftData.footer!, visual_desc: e.target.value } })}
+                            className="w-full text-xs text-slate-600 p-2 border border-slate-200 rounded bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="フッターの視覚指示..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* AI Update Section */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-8">
+                <label className="text-sm font-bold text-slate-700 block mb-2">
+                  AIに修正指示を出す (AI Update)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="例: 全体的にもっと簡潔に、Step3を削除して..."
+                    value={retakeInstr}
+                    onChange={(e) => setRetakeInstr(e.target.value)}
+                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <button
+                    onClick={updateStructure}
+                    disabled={loading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all"
+                  >
+                    AI修正実行
+                  </button>
+                </div>
+              </div>
+
+              {/* Advanced Draft Prompt Editor */}
+              <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-200 mt-8 shadow-md">
+                <button
+                  onClick={handleDraftPromptEditToggle}
+                  className="flex items-center justify-between w-full text-left font-bold text-slate-700 text-sm hover:text-blue-600 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-slate-400" /> 上級者向け: ドラフト生成プロンプトの編集
+                  </span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${isDraftPromptEditOpen ? 'rotate-90' : ''}`} />
+                </button>
+
+                {isDraftPromptEditOpen && (
+                  <div className="mt-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="checkbox"
+                        id="useManualDraftPrompt"
+                        checked={useManualDraftPrompt}
+                        onChange={(e) => {
+                          setUseManualDraftPrompt(e.target.checked);
+                          if (e.target.checked && !manualDraftPrompt) {
+                            setManualDraftPrompt(constructDraftPrompt());
+                          }
+                        }}
+                        className="rounded text-blue-600 focus:ring-blue-500"
+                      />
+                      <label htmlFor="useManualDraftPrompt" className="text-sm font-bold text-slate-700 cursor-pointer">
+                        手動プロンプトを適用する (Override with manual prompt)
+                      </label>
+                    </div>
+
+                    {useManualDraftPrompt && (
+                      <div className="p-3 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-3 border border-yellow-100 flex gap-2 items-start">
+                        <span className="text-lg">⚠️</span>
+                        <div>
+                          <strong>注意:</strong> ここをチェックしている間は、<strong>上のフォームの内容（タイトル変更など）は無視され</strong>、以下のプロンプトがそのまま使用されます。
+                        </div>
+                      </div>
+                    )}
+                    <textarea
+                      value={manualDraftPrompt}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setManualDraftPrompt(e.target.value)}
+                      disabled={!useManualDraftPrompt}
+                      placeholder={useManualDraftPrompt ? "プロンプトを編集してください..." : "チェックを入れると編集できます"}
+                      className={`w-full h-64 p-3 text-xs font-mono border rounded-lg outline-none leading-relaxed transition-colors
+                      ${useManualDraftPrompt ? 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500' : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'}`}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between pt-6 border-t border-slate-100 mt-6">
+                <button onClick={() => setPhase('input')} className="px-6 py-3 text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl font-bold transition-all shadow-sm">
+                  ← 戻る
+                </button>
+                <button
+                  onClick={generateDraft}
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+                >
+                  {loading ? '生成中...' : <>ドラフト作成 <ChevronRight className="w-5 h-5" /></>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       }
 
       {/* --- PHASE 3: DRAFT --- */}
@@ -1368,7 +1479,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
             {!finalImage ? (
               <>
                 <h2 className="text-xl font-bold text-slate-800 mb-4">04. デザインスタイル選択</h2>
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
                   {Object.keys(STYLE_PROMPTS).map((styleName) => {
                     const meta = STYLE_ICONS[styleName];
                     const isSelected = selectedStyle === styleName;
@@ -1376,21 +1487,15 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                       <button
                         key={styleName}
                         onClick={() => setSelectedStyle(styleName)}
-                        className={`aspect-square relative p-2 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center
-                                        ${isSelected ? 'border-blue-600 bg-blue-50 shadow-md transform scale-105' : 'border-slate-100 bg-white/60 hover:border-slate-300'}
-                                    `}
+                        className={`aspect-[4/3] p-2 rounded-lg border-2 transition-all flex flex-col items-center justify-center gap-1 text-center 
+                                        ${isSelected ? 'border-blue-600 bg-blue-50 shadow-md ring-2 ring-blue-200' : 'border-slate-100 bg-white hover:border-slate-300'}`}
                       >
-                        <div className="text-3xl filter drop-shadow-sm">
-                          {meta.icon}
-                        </div>
-                        <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-800' : 'text-slate-600'}`}>{styleName.split('(')[0]}</span>
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 text-blue-600">
-                            <Check className="w-4 h-4" />
-                          </div>
-                        )}
+                        <div className={`text-2xl ${meta.color}`}>{meta.icon}</div>
+                        <span className={`text-[10px] font-bold leading-tight ${isSelected ? 'text-blue-700' : 'text-slate-600'}`}>
+                          {styleName.split('(')[0]}
+                        </span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
 
