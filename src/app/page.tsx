@@ -717,13 +717,23 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
 
       // NO TEXT OVERRIDE
       if (isNoText) {
-        promptToUse += `
-            \n\n**IMPORTANT OVERRIDE: NO TEXT MODE**
-            1. Keep the EXACT same layout, composition, and style.
-            2. **DO NOT WRITE ANY TEXT.** Leave all text boxes BLANK (empty).
-            3. Use the same background colors for text boxes, but make them empty.
-            4. This image will be used as a background material where text will be added later by a human.
-          `;
+        // Completely overwrite the prompt to remove text content interference
+        promptToUse = `
+**Role:** Background Artist / Material Creator
+**Goal:** Create a text-free background version of the provided reference image.
+
+**Instructions:**
+1. **Trace the layout exactly** from the provided reference image.
+2. **REMOVE ALL TEXT.** Do not write a single character, letter, or number.
+3. Keep the speech bubbles, panels, and text boxes, but make them **EMPTY (BLANK)**.
+4. Maintain the same illustration style, colors, and character poses.
+5. The output must be a clean "background material" ready for text to be added in Photoshop.
+
+**Visual Guide:**
+- Speech bubbles: White and empty.
+- Title bars: Solid color and empty.
+- Panels: Detailed illustration but NO text labels.
+`;
       }
 
       const getDownscaledImage = async (dataUrl: string): Promise<string> => {
@@ -744,9 +754,9 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         });
       };
 
-      const finalRefData = (draftImage && draftImage.includes('image/'))
-        ? await getDownscaledImage(draftImage)
-        : null;
+      const finalRefData = (isNoText && finalImage)
+        ? await getDownscaledImage(finalImage)
+        : ((draftImage && draftImage.includes('image/')) ? await getDownscaledImage(draftImage) : null);
 
       const res = await fetch('/api/generate-image', {
         method: 'POST',
@@ -754,7 +764,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
         body: JSON.stringify({
           prompt: promptToUse,
           apiKey: apiKey,
-          refImages: (isRefine || isNoText) ? [] : (finalRefData
+          refImages: (isRefine && !isNoText) ? [] : (finalRefData // Only empty refImages if pure Refine (text edit). For NoText, we need ref.
             ? [{ data: finalRefData, mimeType: "image/jpeg" }]
             : []),
           // Re-enabled draft image reference for better fidelity
