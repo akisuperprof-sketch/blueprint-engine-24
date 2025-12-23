@@ -46,6 +46,7 @@ export default function Home() {
   const [isRefMandatory, setIsRefMandatory] = useState(false);
   const [refImageRole, setRefImageRole] = useState<'general' | 'narrator'>('general');
   const [aspectRatio, setAspectRatio] = useState("4:3");
+  const [draftRichness, setDraftRichness] = useState<'simple' | 'normal' | 'rich'>('rich'); // Default to rich based on recent feedback
   const [targetLanguage, setTargetLanguage] = useState('Japanese');
 
   // Struct Phase
@@ -233,14 +234,36 @@ export default function Home() {
 `;
     }
 
+    let richnessReqs = "";
+    if (draftRichness === 'simple') {
+      richnessReqs = `
+1. **Style:** Simple, loose sketch. Minimal details.
+2. **Layout:** Basic placement of elements. No need for complex framing.
+3. **Visuals:** Iconic and simple.
+4. **Goal:** Fast, rough conceptualization.
+`;
+    } else if (draftRichness === 'normal') {
+      richnessReqs = `
+1. **Style:** Standard clean line drawing.
+2. **Layout:** Clear spacing between sections.
+3. **Visuals:** Clear enough to understand the subject.
+4. **Goal:** Balanced draft for checking structure.
+`;
+    } else { // rich
+      richnessReqs = `
+1. **Layout Style:** Use a **structured "Panel Layout"** (like a comic strip or instruction manual). Draw **clear rectangular borders** around each HEADER, BLOCK, and FOOTER.
+2. **Line Quality:** Use clean, confident black lines. Professional storyboard quality.
+3. **Visuals:** Draw detailed illustrations. Characters and objects must be highly recognizable with facial expressions and poses.
+4. **Text Area:** Leave clear whitespace inside each panel.
+5. **Goal:** High-fidelity, detailed blueprint ready for final production.
+`;
+    }
+
     return `
-You are an expert infographic designer. Create a DRAFT LAYOUT sketch based on the following structure.
-**Draft Requirements:**
-1. Draw a clean, black-and-white line drawing.
-2. Layout the sections (Header, Blocks, Footer) logically.
-3. Draw the visuals described for each section.
-4. Place placeholders for text, but focus on the composition.
-5. **IMPORTANT:** If the "Visual" instruction mentions a character or person, draw them clearly in the specified pose.
+You are an expert infographic designer. Create a DRAFT LAYOUT based on the following structure.
+**Draft Requirements (${draftRichness.toUpperCase()} MODE):**
+${richnessReqs}
+**IMPORTANT:** If the "Visual" instruction mentions a character, draw them clearly.
 
 **Structure Content:**
 Title: ${draftData.main_title}
@@ -248,9 +271,6 @@ Summary: ${draftData.summary}
 Archtype: ${draftData.archetype_name}
 
 ${stepsStr}
-
-* Keep it simple (sketch style).
-* Ensure clear separation between blocks.
 `;
   };
 
@@ -265,6 +285,9 @@ ${stepsStr}
 
   // Step 1: Generate Structure
   const generateStructure = async () => {
+    // ... existing code ...
+    // Note: No changes needed in generateStructure itself
+
     // Allow empty key - backend will check env var
     if (inputText.length < 5) {
       alert("テキストを5文字以上入力してください。");
@@ -273,6 +296,8 @@ ${stepsStr}
 
     setLoading(true);
     setLoadingMessage("Nano Banana Proが思考中... (構造化)");
+
+    // ... rest of generateStructure logic ...
     try {
       const prompt = `
             あなたはプロの編集者です。以下のテキストをインフォグラフィックにするための構成案を作成し、
@@ -340,6 +365,20 @@ ${stepsStr}
       setLoading(false);
     }
   };
+
+  // ... (handleError, updateStructure, generateDraft, etc. remain the same) ...
+  // Need to find where to inject the UI for Richness Selector.
+  // It should be near the Aspect Ratio selector in the render function.
+  // I will assume I can find "縦横比" or similar and place it before.
+
+  // To ensure I don't break the file structure by blind replacing render, I'll grab lines around the aspect ratio UI if possible.
+  // But wait, the previous `view_file` didn't show the bottom half (render).
+  // I need to be careful. I should read the file fully or guess the Structure.
+  // Actually, I can replace the logic parts confidently. The UI part needs a targeted replace.
+
+  // Let's replace the top part first (state and logic).
+
+
 
   // --- Error Handler ---
   const handleError = (error: any) => {
@@ -534,7 +573,7 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
           prompt: promptToUse,
           apiKey: apiKey,
           refImages: isRefine ? [] : (finalRefData
-             ? [{ data: finalRefData, mimeType: "image/jpeg" }]
+            ? [{ data: finalRefData, mimeType: "image/jpeg" }]
             : []),
           // Re-enabled draft image reference for better fidelity
           aspectRatio: aspectRatio
@@ -977,6 +1016,41 @@ ${draftData.summary ? `**Context:** ${draftData.summary}` : ""}
                     className="w-full h-20 p-3 rounded-lg border border-slate-200 bg-white/50 text-sm"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Draft Richness Selector */}
+            <div className="pt-2">
+              <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <Settings className="w-4 h-4 text-blue-500" /> ドラフトの書き込み量 (Richness)
+              </h3>
+              <div className="flex bg-white rounded-xl border border-slate-200 p-1">
+                {[
+                  { id: 'simple', label: 'シンプル (Simple)', desc: '構成確認用のラフな線画。スピード重視。' },
+                  { id: 'normal', label: '標準 (Normal)', desc: '一般的な下書き。バランス重視。' },
+                  { id: 'rich', label: 'リッチ (Rich)', desc: 'プロの絵コンテ風。表情やポーズまで詳細に描画。' },
+                ].map((mode) => {
+                  const isSelected = draftRichness === mode.id;
+                  return (
+                    <button
+                      key={mode.id}
+                      onClick={() => setDraftRichness(mode.id as any)}
+                      className={`flex-1 py-3 px-2 rounded-lg text-sm font-bold transition-all relative group
+                        ${isSelected
+                          ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200'
+                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                        }`}
+                    >
+                      {mode.label}
+
+                      {/* Tooltip Hint */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-[10px] p-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 font-normal leading-snug">
+                        {mode.desc}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
