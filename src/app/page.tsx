@@ -251,12 +251,12 @@ export default function Home() {
 `;
     } else { // rich
       richnessReqs = `
-1. **Art Style:** **High-End Commercial Storyboard Sketch**. Use sophisticated, dynamic ink lines with variation in line weight.
-2. **Detailing:** Add **hatching (shading lines)** to add depth and dimension. Use **motion lines** to show action.
-3. **Flow Indicators:** YOU MUST draw **curved arrows** or dotted lines connecting the blocks to strongly indicate the reading order and process flow.
-4. **Characters:** Draw characters with **clear, exaggerated gestures** (e.g., pointing, holding, explaining). Facial expressions must be detailed and distinct.
-5. **Layout:** Tightly composed "Panel Layout". Every block must have a clear frame.
-6. **Goal:** A professional-grade illustration that looks like a finished manga or architectural sketch.
+1. **Art Style:** **Masterpiece Hand-Drawn Infographic**. Use confident, professional ink lines. The look should be "Rich & Dense" like a high-quality magazine illustration.
+2. **Shading & Texture:** **HEAVILY USE HATCHING (diagonal shading lines)** to add definition to objects and depth to the scene. Do not leave large white spaces empty; fill them with subtle texture or background elements.
+3. **Dynamic Flow:** **BOLD, CURVED ARROWS** are essential. Draw them with thickness and hatching to make them pop. They must guide the viewer's eye clearly from block to block.
+4. **Character Acting:** Characters should be lively and expressive. Use "Manga-style" exaggeration for expressions (e.g., big smiles, focus lines, sweat drops if busy).
+5. **Composition:** Use a **Comic-Strip / Storyboard Layout**. Each step MUST be clearly separated by strong panel borders or negative space.
+6. **Goal:** Create a visual that looks like the "Blue Bottle Coffee Guide" reference: Detailed, charming, and highly informative.
 `;
     }
 

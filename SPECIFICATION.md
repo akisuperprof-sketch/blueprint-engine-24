@@ -77,6 +77,14 @@
 *   **Status Indicator:** Settings modal displays key status and last 4 digits.
 *   **Storage Error Handling:** Automatically handles `QuotaExceededError` for LocalStorage by removing oldest history items to ensure successful saving.
 
+### 3.11 Draft Richness Configuration
+*   **Purpose:** Allows users to control the detail level of the generated draft structure.
+*   **Modes:**
+    *   **Simple:** Minimalist sketch for structure verification.
+    *   **Normal:** Standard balanced draft.
+    *   **Rich (Default):** High-end commercial storyboard quality. Emphasizes hatching, motion lines, bold arrows, and dramatic character poses.
+*   **UI:** 3-mode selector with tooltip descriptions above the aspect ratio settings.
+
 ### 4. Expansion of Contents
 *   **New Archetypes:** `マトリックス (4象限 / 2x2分析)`.
 *   **New Styles:** `切り絵風 (Paper Cutout)`, `ネオンガラス風 (Neon Glass)`.
@@ -137,5 +145,18 @@
 13. **UXの微調整:**
     *   履歴容量警告の実装（3件以上でアラート表示）。
     *   リファレンス画像エリアへのTips追加（白背景推奨など）。
+
+### Phase 5: プロフェッショナル品質への進化 (Professional Polish)
+14. **ドラフト生成エンジンの強化:**
+    *   **リッチネス選択機能:** Draft生成時に書き込み量を「Simple / Normal / Rich」から選択可能に。
+    *   **Richモードのプロンプト刷新:**
+        *   「High-End Commercial Storyboard」から「Masterpiece Hand-Drawn Infographic」へ指示を昇華。
+        *   **ハッチング（陰影）**、**極太の曲線矢印**、**漫画的なキャラクター演技**、**明確なパネル割り**を必須要件化。
+15. **モバイル最適化 (Responsive):**
+    *   タイトル文字サイズの自動縮小。
+    *   スタイル選択・リッチ度選択・アスペクト比選択などのグリッドを、スマホ画面では2列表示に変更しタップしやすく改善。
+    *   履歴・設定モーダルをスマホ全幅表示に対応。
+16. **API不具合修正:**
+    *   Gemini 3 Pro Image Previewにおける「AspectRatio指定エラー」を回避するため、アスペクト比指示をSystem ConfigからPrompt Textへ移動。
 
 
