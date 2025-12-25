@@ -85,7 +85,24 @@
     *   **Rich (Default):** High-end commercial storyboard quality. Emphasizes hatching, motion lines, bold arrows, and dramatic character poses.
 *   **UI:** 3-mode selector with tooltip descriptions above the aspect ratio settings.
 
-### 4. Expansion of Contents
+#### 3.12. 納品用「文字なし素材」作成機能 (Text-Free Material)
+*   **目的:** ココナラ等のプロフェッショナルな納品において、ユーザー（制作者）が外部ツール（Photoshop, Canva等）で高品質な文字を自ら入れるための「背景素材」を提供。
+*   **ロジック (Targeted Erasure):** 
+    *   構成案（`draftData`）からタイトルやステップ名を抽出し、AIに対して「これらの特定の単語を画像から完全に削除せよ」と明示的に命令。
+    *   **物理的指示:** 「背景色で塗りつぶし」「フェイク文字禁止」「枠組みは維持」という、デザイン意図に則った日本語プロンプトを使用。
+*   **モデルスイッチ戦略 (Model Switching):**
+    *   通常の清書には描写力の高い `Imagen 3` や `Gemini 3 Pro` を使用。
+    *   文字消しタスクには、禁止命令（負の制約）に強い `gemini-1.5-pro-002` または `gemini-2.0-flash-exp` を動的に選択して実行。
+
+### 3.13. 画質の限界突破 (Ultra-Resolution Engine)
+*   **プロンプト密度2倍化:** APIへの指示に「8k解像度」「超高精細テクスチャ」「マスターワーク」等のキーワードを常時付与し、1024px内の視覚密度を最大化。
+*   **高精細モード (SVG優先):** 
+    *   UIにトグルボタンを追加。ONの場合、AIに「無限解像度のSVGベクターコード」での出力を最強レベルで要求。
+    *   ノートPCや大型ディスプレイでも一切荒れない、圧倒的な鮮明さを実現。
+*   **無劣化エクスポート (Lossless Export):**
+    *   キャンバスからの保存形式を `PNG 100% Quality` に固定。保存時の再圧縮による劣化を完全に排除。
+
+## 4. Expansion of Contents
 *   **New Archetypes:** `マトリックス (4象限 / 2x2分析)`.
 *   **New Styles:** `切り絵風 (Paper Cutout)`, `ネオンガラス風 (Neon Glass)`.
 *   **Marketing Copy:** Updated "Detailed Feature Introduction" with fresh, user-provided marketing text.
@@ -160,3 +177,13 @@
     *   Gemini 3 Pro Image Previewにおける「AspectRatio指定エラー」を回避するため、アスペクト比指示をSystem ConfigからPrompt Textへ移動。
 
 
+### Phase 6: 文字なし素材化と究極の画質向上 (Pro-Delivery & Ultra-Resolution)
+17. **納品エコシステムの構築:**
+    *   清書完了画面に「文字なし背景素材を作成」ボタンを追加。
+    *   AIに文字を「模様」ではなく「除去対象物」と認識させる「指名手配（Keyword Removal）」プロンプトを開発。
+18. **画質クオリティの再定義:**
+    *   「高精細モード (SVG優先)」を実装し、ドット絵の制約を超えたベクター図解の出力を強化。
+    *   保存品質を無劣化PNG(1.0)に固定。
+    *   プロンプトエンジニアリングにより、標準解像度内での情報の描き込み密度を大幅に向上。
+19. **インテリジェント・モデルスイッチ:**
+    *   タスクの性質（描画 vs 編集）に合わせて、バックエンドで Gemini 3 Pro / 1.5 Pro / 2.0 Flash を秒単位で切り替えて最適化するロジックを実装。
