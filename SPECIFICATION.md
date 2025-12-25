@@ -69,7 +69,7 @@
     *   Detailed text prompts are used exclusively to ensure structural adherence.
 *   **Server-Side Fallback & Retry:**
     *   **Text Model Priority:** `gemini-3-pro-preview` -> `gemini-2.0-flash-exp` -> `gemini-1.5-pro` -> `gemini-1.5-flash`
-    *   **Image Model Priority:** `gemini-3-pro-image-preview` -> `nano-banana-pro-preview` -> `gemini-2.0-flash-exp` -> `1.5-pro` -> `1.5-flash`
+    *   **Image Model Priority:** `imagen-3.0-generate-001` -> `gemini-3-pro-image-preview` -> `nano-banana-pro-preview` -> `gemini-2.0-flash-exp`
     *   **Retry Delay:** Automatic 2-second interval before retrying after a "Quota Exceeded (429)" error.
 
 ### 3.10. Settings & API Management
