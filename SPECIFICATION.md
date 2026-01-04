@@ -68,8 +68,8 @@
     *   Draft images are **NOT** sent as visual references during final rendering to save bandwidth and quota.
     *   Detailed text prompts are used exclusively to ensure structural adherence.
 *   **Server-Side Fallback & Retry:**
-    *   **Text Model Priority:** `gemini-3-pro-preview` -> `gemini-2.0-flash-exp` -> `gemini-1.5-pro` -> `gemini-1.5-flash`
-    *   **Image Model Priority:** `imagen-3.0-generate-001` -> `gemini-3-pro-image-preview` -> `nano-banana-pro-preview` -> `gemini-2.0-flash-exp`
+    *   **Text Model Priority:** `gemini-3-flash` -> `gemini-3-pro-preview` -> `gemini-2.0-flash-exp` -> `gemini-1.5-pro` -> `gemini-1.5-flash`
+    *   **Image Model Priority:** `nano-banana-pro-preview` -> `gemini-3-pro-image-preview` -> `imagen-3.0-generate-001` -> `gemini-2.0-flash-exp`
     *   **Retry Delay:** Automatic 2-second interval before retrying after a "Quota Exceeded (429)" error.
 
 ### 3.10. Settings & API Management
@@ -186,4 +186,9 @@
     *   保存品質を無劣化PNG(1.0)に固定。
     *   プロンプトエンジニアリングにより、標準解像度内での情報の描き込み密度を大幅に向上。
 19. **インテリジェント・モデルスイッチ:**
-    *   タスクの性質（描画 vs 編集）に合わせて、バックエンドで Gemini 3 Pro / 1.5 Pro / 2.0 Flash を秒単位で切り替えて最適化するロジックを実装。
+
+### Phase 7: エンジン刷新 (Model Engine Refresh 2026)
+20. **デフォルトモデルの変更:**
+    *   **Text (構造化):** `Gemini 3 Flash` を最優先モデルとして採用。高速化とコスト効率を両立。
+    *   **Image (生成):** `Nano Banana Pro (Gemini 3 Pro Image Preview)` を最優先モデルとして採用。
+    *   **UIロジック:** ユーザーへのフィードバック（ローディング表示）を新モデル名に対応。

@@ -318,7 +318,7 @@ Archtype: ${draftData.archetype_name}
     }
 
     setLoading(true);
-    setLoadingMessage("Nano Banana Proが思考中... (構造化)");
+    setLoadingMessage("Gemini 3 Flashが思考中... (構造化)");
 
     // ... rest of generateStructure logic ...
     try {

@@ -20,9 +20,9 @@ export async function POST(req: Request) {
         // User insists they have access to these models. We will try them.
         // If 404, we will log available models to debug.
         let modelsToTry = [
-            "imagen-3.0-generate-001",
-            "gemini-3-pro-image-preview",   // User feedback
-            "nano-banana-pro-preview",      // User feedback
+            "nano-banana-pro-preview",      // User feedback - Primary
+            "gemini-3-pro-image-preview",   // User feedback - Alias
+            "imagen-3.0-generate-001",      // High Quality Fallback
             "gemini-2.0-flash-exp"          // Reliable fallback
         ];
 

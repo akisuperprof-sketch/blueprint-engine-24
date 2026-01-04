@@ -13,8 +13,8 @@ export async function POST(req: Request) {
 
         const genAI = new GoogleGenerativeAI(finalApiKey);
 
-        // Requested priority: 3-pro (user wish) -> 2.0-flash (best exp) -> 1.5-pro (capable) -> 1.5-flash (stable/fast)
-        const modelsToTry = ["gemini-3-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
+        // Requested priority: 3-flash (user wish) -> 3-pro -> 2.0-flash (best exp) -> 1.5-pro (capable) -> 1.5-flash (stable/fast)
+        const modelsToTry = ["gemini-3-flash", "gemini-3-pro-preview", "gemini-2.0-flash-exp", "gemini-1.5-pro", "gemini-1.5-flash"];
 
         let lastError = "";
         let text = "";
